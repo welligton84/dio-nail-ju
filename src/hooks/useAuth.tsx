@@ -1,16 +1,14 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import {
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updatePassword
+} from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 import type { ReactNode } from 'react';
 import type { User } from '../types';
-
-// Demo user for when Firebase is not configured
-const DEMO_USER: User = {
-    id: 'demo-1',
-    email: 'well@well.com',
-    name: 'Well Admin',
-    role: 'admin',
-    active: true,
-    createdAt: new Date().toISOString(),
-};
 
 interface AuthContextType {
     user: User | null;
@@ -24,64 +22,77 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-const STORAGE_KEY = 'studio_nail_user';
-
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check for saved session
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            try {
-                setUser(JSON.parse(saved));
-            } catch {
-                localStorage.removeItem(STORAGE_KEY);
-            }
+        if (!auth) {
+            setIsLoading(false);
+            return;
         }
-        setIsLoading(false);
+
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (firebaseUser) {
+                if (db) {
+                    try {
+                        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                        if (userDoc.exists()) {
+                            const userData = userDoc.data() as User;
+                            setUser({ ...userData, id: firebaseUser.uid, email: firebaseUser.email! });
+                        } else {
+                            setUser({
+                                id: firebaseUser.uid,
+                                email: firebaseUser.email!,
+                                name: firebaseUser.displayName || 'Usuário',
+                                role: 'employee',
+                                active: true,
+                                createdAt: new Date().toISOString()
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar dados do usuário:', error);
+                    }
+                }
+            } else {
+                setUser(null);
+            }
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
-        // For demo, check against a stored list or the default admin
-        const usersJson = localStorage.getItem('studio_nail_users_list');
-        const users: User[] = usersJson ? JSON.parse(usersJson) : [DEMO_USER];
-
-        const foundUser = users.find(u => u.email === email && u.active);
-        // Simple demo password check (in real app, use secure auth)
-        if (foundUser && password === '123456') {
-            setUser(foundUser);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(foundUser));
+        if (!auth) return false;
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
             return true;
+        } catch (error) {
+            console.error('Erro ao fazer login:', error);
+            return false;
         }
-        return false;
     };
 
     const logout = async (): Promise<void> => {
-        setUser(null);
-        localStorage.removeItem(STORAGE_KEY);
+        if (!auth) return;
+        await signOut(auth);
     };
 
     const addUser = async (newUser: Omit<User, 'id' | 'createdAt'>) => {
-        const usersJson = localStorage.getItem('studio_nail_users_list');
-        const users: User[] = usersJson ? JSON.parse(usersJson) : [DEMO_USER];
-
-        const userToAdd: User = {
-            ...newUser,
-            id: Date.now().toString(),
-            createdAt: new Date().toISOString(),
-        };
-
-        const updatedUsers = [...users, userToAdd];
-        localStorage.setItem('studio_nail_users_list', JSON.stringify(updatedUsers));
-        alert('Usuário cadastrado com sucesso!');
+        alert('Para cadastrar novos usuários no Firebase Real, utilize o Console do Firebase ou uma Cloud Function para garantir a segurança.');
+        console.log('Dados do novo usuário:', newUser);
     };
 
     const changePassword = async (newPassword: string) => {
-        // In a real app, this would call a backend/firebase
-        console.log('Senha alterada para:', newPassword);
-        alert('Senha alterada com sucesso!');
+        if (!auth?.currentUser) return;
+        try {
+            await updatePassword(auth.currentUser, newPassword);
+            alert('Senha alterada com sucesso!');
+        } catch (error) {
+            console.error('Erro ao alterar senha:', error);
+            alert('Erro ao alterar senha. Talvez seja necessário fazer login novamente.');
+        }
     };
 
     if (isLoading) {
