@@ -14,7 +14,9 @@ export function Clients() {
         email: '',
         cpf: '',
         birthDate: '',
+        address: '',
     });
+    const [historyClient, setHistoryClient] = useState<string | null>(null);
 
     const filteredClients = clients.filter(client =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -40,7 +42,7 @@ export function Clients() {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', phone: '', email: '', cpf: '', birthDate: '' });
+        setFormData({ name: '', phone: '', email: '', cpf: '', birthDate: '', address: '' });
         setEditingClient(null);
         setShowForm(false);
     };
@@ -63,6 +65,7 @@ export function Clients() {
             email: client.email || '',
             cpf: client.cpf || '',
             birthDate: client.birthDate || '',
+            address: client.address || '',
         });
         setShowForm(true);
     };
@@ -93,6 +96,71 @@ export function Clients() {
                     Novo Cliente
                 </button>
             </div>
+
+            {/* History Modal */}
+            {historyClient && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900">Histórico de Visitas</h2>
+                                <p className="text-sm text-gray-500 mt-1">{clients.find(c => c.id === historyClient)?.name}</p>
+                            </div>
+                            <button onClick={() => setHistoryClient(null)} className="text-gray-400 hover:text-gray-600">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-6 max-h-[60vh] overflow-y-auto">
+                            {(() => {
+                                const { appointments } = useData();
+                                const clientApts = appointments
+                                    .filter(a => a.clientId === historyClient)
+                                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+                                if (clientApts.length === 0) {
+                                    return (
+                                        <div className="text-center py-12">
+                                            <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                            <p className="text-gray-500">Nenhum histórico encontrado</p>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className="space-y-4">
+                                        {clientApts.map((apt) => (
+                                            <div key={apt.id} className="border border-gray-100 rounded-xl p-4 bg-gray-50/50">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">{formatDate(apt.date)} às {apt.time}</p>
+                                                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${apt.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                                            }`}>
+                                                            {apt.status === 'completed' ? 'Concluído' : apt.status}
+                                                        </span>
+                                                    </div>
+                                                    <p className="font-bold text-pink-600">
+                                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(apt.totalValue)}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {apt.services.map((s, idx) => (
+                                                        <span key={idx} className="bg-white border border-gray-200 px-2.5 py-1 rounded-lg text-xs text-gray-600">
+                                                            {s.name}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                                {apt.notes && (
+                                                    <p className="mt-2 text-xs text-gray-500 italic">Obs: {apt.notes}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Search */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
@@ -173,6 +241,16 @@ export function Clients() {
                                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
                                     />
                                 </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Rua, número, bairro..."
+                                        value={formData.address}
+                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-3 pt-4">
                                 <button
@@ -247,9 +325,12 @@ export function Clients() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                            <button
+                                                onClick={() => setHistoryClient(client.id)}
+                                                className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold hover:bg-blue-100 transition-colors"
+                                            >
                                                 {client.totalVisits} visitas
-                                            </span>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-500">
                                             {client.lastVisit ? formatDate(client.lastVisit) : '-'}
@@ -299,9 +380,12 @@ export function Clients() {
                                             <p className="text-xs text-gray-500">Cadastrado em {formatDate(client.createdAt)}</p>
                                         </div>
                                     </div>
-                                    <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                    <button
+                                        onClick={() => setHistoryClient(client.id)}
+                                        className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider hover:bg-blue-100 transition-colors"
+                                    >
                                         {client.totalVisits} visitas
-                                    </span>
+                                    </button>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 pt-1">
                                     <div className="space-y-1">
@@ -321,9 +405,9 @@ export function Clients() {
                                             <p className="text-sm text-gray-700">{formatDate(client.birthDate)}</p>
                                         </div>
                                     )}
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold">Última Visita</p>
-                                        <p className="text-sm text-gray-700">{client.lastVisit ? formatDate(client.lastVisit) : '-'}</p>
+                                    <div className="space-y-1 col-span-2">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold">Endereço</p>
+                                        <p className="text-sm text-gray-700 truncate">{client.address || '-'}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2 pt-2">

@@ -18,6 +18,8 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<boolean>;
     logout: () => Promise<void>;
+    addUser: (newUser: Omit<User, 'id' | 'createdAt'>) => Promise<void>;
+    changePassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -42,10 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string): Promise<boolean> => {
-        // Demo authentication
-        if (email === 'well@well.com' && password === '123456') {
-            setUser(DEMO_USER);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(DEMO_USER));
+        // For demo, check against a stored list or the default admin
+        const usersJson = localStorage.getItem('studio_nail_users_list');
+        const users: User[] = usersJson ? JSON.parse(usersJson) : [DEMO_USER];
+
+        const foundUser = users.find(u => u.email === email && u.active);
+        // Simple demo password check (in real app, use secure auth)
+        if (foundUser && password === '123456') {
+            setUser(foundUser);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(foundUser));
             return true;
         }
         return false;
@@ -54,6 +61,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async (): Promise<void> => {
         setUser(null);
         localStorage.removeItem(STORAGE_KEY);
+    };
+
+    const addUser = async (newUser: Omit<User, 'id' | 'createdAt'>) => {
+        const usersJson = localStorage.getItem('studio_nail_users_list');
+        const users: User[] = usersJson ? JSON.parse(usersJson) : [DEMO_USER];
+
+        const userToAdd: User = {
+            ...newUser,
+            id: Date.now().toString(),
+            createdAt: new Date().toISOString(),
+        };
+
+        const updatedUsers = [...users, userToAdd];
+        localStorage.setItem('studio_nail_users_list', JSON.stringify(updatedUsers));
+        alert('Usuário cadastrado com sucesso!');
+    };
+
+    const changePassword = async (newPassword: string) => {
+        // In a real app, this would call a backend/firebase
+        console.log('Senha alterada para:', newPassword);
+        alert('Senha alterada com sucesso!');
     };
 
     if (isLoading) {
@@ -77,6 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isAuthenticated: !!user,
                 login,
                 logout,
+                addUser,
+                changePassword,
             }}
         >
             {children}

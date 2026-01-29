@@ -13,11 +13,11 @@ const INITIAL_SERVICES: Service[] = [
 ];
 
 const INITIAL_CLIENTS: Client[] = [
-    { id: '1', name: 'Maria Silva', phone: '(11) 98765-4321', email: 'maria@email.com', cpf: '', birthDate: '1990-05-15', totalVisits: 15, createdAt: '2024-01-01', lastVisit: '2024-01-20' },
-    { id: '2', name: 'Ana Paula', phone: '(11) 91234-5678', email: 'ana@email.com', cpf: '', totalVisits: 8, createdAt: '2024-01-05', lastVisit: '2024-01-18' },
-    { id: '3', name: 'Juliana Costa', phone: '(11) 99876-5432', cpf: '', totalVisits: 22, createdAt: '2023-12-01', lastVisit: '2024-01-22' },
-    { id: '4', name: 'Fernanda Lima', phone: '(11) 93456-7890', cpf: '', totalVisits: 5, createdAt: '2024-01-10', lastVisit: '2024-01-15' },
-    { id: '5', name: 'Carolina Souza', phone: '(11) 94567-8901', cpf: '', totalVisits: 12, createdAt: '2023-11-15', lastVisit: '2024-01-19' },
+    { id: '1', name: 'Maria Silva', phone: '(11) 98765-4321', email: 'maria@email.com', cpf: '123.456.789-00', address: 'Rua das Flores, 123', birthDate: '1990-05-15', totalVisits: 15, createdAt: '2024-01-01', lastVisit: '2024-01-20' },
+    { id: '2', name: 'Ana Paula', phone: '(11) 91234-5678', email: 'ana@email.com', cpf: '234.567.890-11', address: 'Av. Paulista, 1500', totalVisits: 8, createdAt: '2024-01-05', lastVisit: '2024-01-18' },
+    { id: '3', name: 'Juliana Costa', phone: '(11) 99876-5432', cpf: '345.678.901-22', address: 'Rua Augusta, 500', totalVisits: 22, createdAt: '2023-12-01', lastVisit: '2024-01-22' },
+    { id: '4', name: 'Fernanda Lima', phone: '(11) 93456-7890', cpf: '456.789.012-33', address: 'Rua Oscar Freire, 1000', totalVisits: 5, createdAt: '2024-01-10', lastVisit: '2024-01-15' },
+    { id: '5', name: 'Carolina Souza', phone: '(11) 94567-8901', cpf: '567.890.123-44', address: 'Rua Haddock Lobo, 800', totalVisits: 12, createdAt: '2023-11-15', lastVisit: '2024-01-19' },
 ];
 
 interface DataContextType {
@@ -107,7 +107,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     const updateAppointment = (id: string, data: Partial<Appointment>) => {
-        setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
+        setAppointments(prev => prev.map(a => {
+            if (a.id === id) {
+                const updated = { ...a, ...data };
+
+                // If status changed to confirmed, simulate notification
+                if (data.status === 'confirmed' && a.status !== 'confirmed') {
+                    console.log(`[NOTIFICAÇÃO] Enviando SMS e E-mail para ${a.clientName}...`);
+                    console.log(`Mensagem: Olá ${a.clientName}, seu agendamento para o dia ${a.date} às ${a.time} foi confirmado!`);
+                    alert(`✅ Notificações enviadas para ${a.clientName} (Email & SMS)`);
+                }
+
+                return updated;
+            }
+            return a;
+        }));
     };
 
     const deleteAppointment = (id: string) => {

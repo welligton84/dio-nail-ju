@@ -19,6 +19,7 @@ export interface Client {
     totalVisits: number;
     createdAt: string;
     lastVisit?: string;
+    address?: string;
     notes?: string;
 }
 
@@ -96,6 +97,7 @@ export interface ClientFormData {
     email: string;
     cpf?: string;
     birthDate: string;
+    address?: string;
 }
 
 export interface ServiceFormData {
