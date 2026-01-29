@@ -15,10 +15,10 @@ export function Login() {
         setError('');
         setIsLoading(true);
 
-        const success = await login(email, password);
+        const result = await login(email, password);
 
-        if (!success) {
-            setError('E-mail ou senha incorretos');
+        if (!result.success) {
+            setError(result.error || 'Erro ao fazer login');
         }
         setIsLoading(false);
     };
@@ -107,17 +107,6 @@ export function Login() {
                         </button>
                     </form>
 
-                    {/* Demo credentials */}
-                    <div className="mt-8 pt-6 border-t border-gray-100">
-                        <div className="text-center">
-                            <p className="text-sm text-gray-500 mb-2">Dados de acesso demo:</p>
-                            <div className="bg-gray-50 rounded-xl p-3">
-                                <p className="font-mono text-sm text-gray-700">
-                                    well@well.com / 123456
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Footer */}

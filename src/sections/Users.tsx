@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Shield, User, Mail, CheckCircle, XCircle, Plus, X } from 'lucide-react';
+import { Shield, User as UserIcon, Mail, CheckCircle, XCircle, Plus, X } from 'lucide-react';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import type { User } from '../types';
 
 export function Users() {
     const { user, addUser, changePassword } = useAuth();
@@ -18,23 +21,27 @@ export function Users() {
         confirm: '',
     });
 
-    // Demo users list - in a real app, this would be a state synchronized with the backend
-    const [usersList, setUsersList] = useState(() => {
-        const saved = localStorage.getItem('studio_nail_users_list');
-        return saved ? JSON.parse(saved) : [
-            { id: 'demo-1', name: 'Well Admin', email: 'well@well.com', role: 'admin', active: true, createdAt: '2024-01-01' },
-            { id: '2', name: 'Maria Funcionária', email: 'maria@studio.com', role: 'employee', active: true, createdAt: '2024-01-15' },
-        ];
-    });
+    const [usersList, setUsersList] = useState<User[]>([]);
+
+    useEffect(() => {
+        if (!db) return;
+
+        const q = query(collection(db, 'users'), orderBy('name', 'asc'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const users = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as User));
+            setUsersList(users);
+        }, (error) => {
+            console.error('Erro ao listar usuários:', error);
+        });
+
+        return () => unsubscribe();
+    }, []);
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
         await addUser(newUserData);
         setShowAddForm(false);
         setNewUserData({ name: '', email: '', role: 'employee', active: true });
-        // Refresh local list
-        const saved = localStorage.getItem('studio_nail_users_list');
-        if (saved) setUsersList(JSON.parse(saved));
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
@@ -65,6 +72,7 @@ export function Users() {
     };
 
     const formatDate = (date: string) => {
+        if (!date) return '-';
         return new Date(date).toLocaleDateString('pt-BR');
     };
 
@@ -143,7 +151,7 @@ export function Users() {
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <User className="w-8 h-8" />
+                            <UserIcon className="w-8 h-8" />
                         </div>
                         <div>
                             <h2 className="text-xl font-bold">{user?.name}</h2>
@@ -176,16 +184,6 @@ export function Users() {
                             </button>
                         </div>
                         <form onSubmit={handleChangePassword} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Atual (Para demonstração: 123456)</label>
-                                <input
-                                    type="password"
-                                    value={passwords.current}
-                                    onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
-                                    required
-                                />
-                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Nova Senha</label>
                                 <input
@@ -232,52 +230,44 @@ export function Users() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {usersList.map((u: any) => (
-                                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500">
-                                                <User className="w-5 h-5" />
-                                            </div>
-                                            <span className="font-medium text-gray-900">{u.name}</span>
-                                        </div>
+                            {usersList.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                        Nenhum usuário cadastrado além de você.
                                     </td>
-                                    <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
-                                    <td className="px-6 py-4">{getRoleBadge(u.role)}</td>
-                                    <td className="px-6 py-4">
-                                        {u.active ? (
-                                            <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                                                <CheckCircle className="w-4 h-4" />
-                                                Ativo
-                                            </span>
-                                        ) : (
-                                            <span className="flex items-center gap-1 text-red-600 text-sm font-medium">
-                                                <XCircle className="w-4 h-4" />
-                                                Inativo
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(u.createdAt)}</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                usersList.map((u: User) => (
+                                    <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500">
+                                                    <UserIcon className="w-5 h-5" />
+                                                </div>
+                                                <span className="font-medium text-gray-900">{u.name}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
+                                        <td className="px-6 py-4">{getRoleBadge(u.role)}</td>
+                                        <td className="px-6 py-4">
+                                            {u.active ? (
+                                                <span className="flex items-center gap-1 text-green-600 text-sm font-medium">
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Ativo
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center gap-1 text-red-600 text-sm font-medium">
+                                                    <XCircle className="w-4 h-4" />
+                                                    Inativo
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-500">{formatDate(u.createdAt)}</td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
-                </div>
-            </div>
-
-            {/* Info Card */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                    <div className="bg-blue-100 rounded-lg p-2">
-                        <Shield className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                        <h3 className="font-medium text-blue-900">Informação</h3>
-                        <p className="text-sm text-blue-700 mt-1">
-                            Esta é uma versão demo. Para adicionar mais usuários e gerenciar permissões,
-                            configure o Firebase Authentication no projeto.
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>

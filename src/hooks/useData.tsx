@@ -44,29 +44,36 @@ export function DataProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!db) return;
 
+        const handleError = (error: any, context: string) => {
+            console.error(`Status Firestore [${context}]:`, error);
+            if (error.code === 'permission-denied') {
+                console.warn('Verifique as regras de segurança do Firestore no Console.');
+            }
+        };
+
         // Clients listener
         const qClients = query(collection(db, 'clients'), orderBy('name'));
         const unsubscribeClients = onSnapshot(qClients, (snapshot) => {
             setClients(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Client)));
-        });
+        }, (err) => handleError(err, 'clientes'));
 
         // Services listener
         const qServices = query(collection(db, 'services'), orderBy('name'));
         const unsubscribeServices = onSnapshot(qServices, (snapshot) => {
             setServices(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Service)));
-        });
+        }, (err) => handleError(err, 'serviços'));
 
         // Appointments listener
         const qAppointments = query(collection(db, 'appointments'), orderBy('date', 'desc'));
         const unsubscribeAppointments = onSnapshot(qAppointments, (snapshot) => {
             setAppointments(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Appointment)));
-        });
+        }, (err) => handleError(err, 'agendamentos'));
 
         // Financial Records listener
         const qFinancial = query(collection(db, 'financialRecords'), orderBy('date', 'desc'));
         const unsubscribeFinancial = onSnapshot(qFinancial, (snapshot) => {
             setFinancialRecords(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as FinancialRecord)));
-        });
+        }, (err) => handleError(err, 'financeiro'));
 
         return () => {
             unsubscribeClients();

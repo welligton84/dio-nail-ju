@@ -5,23 +5,19 @@ import type { Auth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 
-// Firebase configuration from environment variables
+// Firebase configuration (Hardcoded for production reliability)
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    apiKey: "AIzaSyB7LMBUsrQGAoCOkTk-7a93mmQrKZo_6IM",
+    authDomain: "julianamirandaconcept.firebaseapp.com",
+    projectId: "julianamirandaconcept",
+    storageBucket: "julianamirandaconcept.firebasestorage.app",
+    messagingSenderId: "912211096106",
+    appId: "1:912211096106:web:885061956b696fbe738953",
 };
 
 // Check if Firebase is configured
 export const isFirebaseConfigured = (): boolean => {
-    return !!(
-        firebaseConfig.apiKey &&
-        firebaseConfig.authDomain &&
-        firebaseConfig.projectId
-    );
+    return !!firebaseConfig.apiKey;
 };
 
 let app: FirebaseApp | null = null;

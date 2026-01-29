@@ -5,7 +5,7 @@ import {
     onAuthStateChanged,
     updatePassword
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, limit, query } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import type { ReactNode } from 'react';
 import type { User } from '../types';
@@ -14,7 +14,7 @@ interface AuthContextType {
     user: User | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
     addUser: (newUser: Omit<User, 'id' | 'createdAt'>) => Promise<void>;
     changePassword: (newPassword: string) => Promise<void>;
@@ -36,22 +36,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (firebaseUser) {
                 if (db) {
                     try {
-                        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+                        const userRef = doc(db, 'users', firebaseUser.uid);
+                        const userDoc = await getDoc(userRef);
+
                         if (userDoc.exists()) {
                             const userData = userDoc.data() as User;
                             setUser({ ...userData, id: firebaseUser.uid, email: firebaseUser.email! });
                         } else {
-                            setUser({
+                            // First time login, user exists in Auth but not in Firestore 'users' collection
+                            // Check if there are any other users. If not, this is the first user (Admin)
+                            const usersQuery = query(collection(db, 'users'), limit(1));
+                            const usersSnapshot = await getDocs(usersQuery);
+                            const isFirstUser = usersSnapshot.empty;
+
+                            const newProfile: User = {
                                 id: firebaseUser.uid,
                                 email: firebaseUser.email!,
-                                name: firebaseUser.displayName || 'Usuário',
-                                role: 'employee',
+                                name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
+                                role: isFirstUser ? 'admin' : 'employee',
                                 active: true,
                                 createdAt: new Date().toISOString()
-                            });
+                            };
+
+                            await setDoc(userRef, newProfile);
+                            setUser(newProfile);
                         }
-                    } catch (error) {
-                        console.error('Erro ao buscar dados do usuário:', error);
+                    } catch (error: any) {
+                        console.error('Erro ao sincronizar perfil do usuário:', error);
+                        // Fallback logic
+                        setUser({
+                            id: firebaseUser.uid,
+                            email: firebaseUser.email!,
+                            name: 'Usuário',
+                            role: 'employee',
+                            active: true,
+                            createdAt: new Date().toISOString()
+                        });
+
+                        if (error.code === 'permission-denied') {
+                            alert('Erro de permissão no Firestore. Verifique as regras no Console.');
+                        }
                     }
                 }
             } else {
@@ -63,14 +87,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => unsubscribe();
     }, []);
 
-    const login = async (email: string, password: string): Promise<boolean> => {
-        if (!auth) return false;
+    const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+        if (!auth) return { success: false, error: 'Firebase não inicializado' };
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            return true;
-        } catch (error) {
+            return { success: true };
+        } catch (error: any) {
             console.error('Erro ao fazer login:', error);
-            return false;
+            let message = 'E-mail ou senha incorretos';
+            if (error.code === 'auth/user-not-found') message = 'Usuário não encontrado';
+            if (error.code === 'auth/wrong-password') message = 'Senha incorreta';
+            if (error.code === 'auth/network-request-failed') message = 'Erro de conexão com o servidor';
+            return { success: false, error: message };
         }
     };
 
@@ -80,8 +108,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const addUser = async (newUser: Omit<User, 'id' | 'createdAt'>) => {
-        alert('Para cadastrar novos usuários no Firebase Real, utilize o Console do Firebase ou uma Cloud Function para garantir a segurança.');
-        console.log('Dados do novo usuário:', newUser);
+        if (!db) return;
+        try {
+            // Note: This only creates the profile in Firestore. 
+            // The user must still be created in Firebase Auth Console/Functions for security reasons.
+            // But we can at least show them in the list.
+            await setDoc(doc(collection(db, 'users')), {
+                ...newUser,
+                createdAt: new Date().toISOString()
+            });
+            alert('Perfil do usuário criado no banco de dados! Lembre-se de também criar o login (E-mail/Senha) no Console do Firebase para este usuário.');
+        } catch (error) {
+            console.error('Erro ao adicionar usuário:', error);
+            alert('Erro ao salvar usuário no banco de dados.');
+        }
     };
 
     const changePassword = async (newPassword: string) => {
