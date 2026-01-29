@@ -1,9 +1,24 @@
 import { useData } from '../hooks/useData';
-import { Users, Calendar, CalendarCheck, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Users, Calendar, CalendarCheck, TrendingUp, TrendingDown, DollarSign, MessageSquare } from 'lucide-react';
 
 export function Dashboard() {
-    const { dashboardStats, getTodayAppointments, services } = useData();
+    const { dashboardStats, getTodayAppointments, services, clients } = useData();
     const todayAppointments = getTodayAppointments();
+
+    const handleWhatsAppManual = (aptId: string) => {
+        const apt = todayAppointments.find(a => a.id === aptId);
+        const client = clients.find(c => c.id === apt?.clientId);
+        if (apt && client && client.phone) {
+            const message = `Olá ${client.name}! Gostaria de confirmar seu agendamento de hoje às ${apt.time} no Studio Nail Ju? ✨💅`;
+
+            const sanitizedPhone = client.phone.replace(/\D/g, '');
+            const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
+                ? `55${sanitizedPhone}`
+                : sanitizedPhone;
+
+            window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+    };
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -112,16 +127,25 @@ export function Dashboard() {
                                     <span className="bg-pink-100 text-pink-700 px-3 py-1.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap">
                                         ⏱️ {apt.time}
                                     </span>
-                                    <div className="min-w-0">
+                                    <div className="min-w-0 flex-1">
                                         <p className="font-bold text-gray-900 truncate">{apt.clientName}</p>
                                         <p className="text-xs sm:text-sm text-gray-500 truncate">{apt.services.map(s => s.name).join(', ')}</p>
                                     </div>
                                 </div>
-                                <div className="flex justify-between sm:justify-end items-center sm:block">
-                                    <span className="text-[10px] text-gray-400 uppercase font-bold sm:hidden">Valor</span>
-                                    <span className="font-bold text-green-600 text-base sm:text-lg">
-                                        {formatCurrency(apt.totalValue)}
-                                    </span>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => handleWhatsAppManual(apt.id)}
+                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                        title="Enviar WhatsApp"
+                                    >
+                                        <MessageSquare className="w-5 h-5" />
+                                    </button>
+                                    <div className="flex justify-between sm:justify-end items-center sm:block">
+                                        <span className="text-[10px] text-gray-400 uppercase font-bold sm:hidden">Valor</span>
+                                        <span className="font-bold text-green-600 text-base sm:text-lg">
+                                            {formatCurrency(apt.totalValue)}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         ))}

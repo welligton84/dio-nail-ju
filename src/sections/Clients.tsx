@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useData } from '../hooks/useData';
 import type { ClientFormData } from '../types';
-import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X, MessageSquare } from 'lucide-react';
 
 export function Clients() {
     const { clients, addClient, updateClient, deleteClient } = useData();
@@ -78,6 +78,15 @@ export function Clients() {
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('pt-BR');
+    };
+
+    const handleWhatsApp = (client: typeof clients[0]) => {
+        const sanitizedPhone = client.phone.replace(/\D/g, '');
+        const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
+            ? `55${sanitizedPhone}`
+            : sanitizedPhone;
+
+        window.open(`https://wa.me/${finalPhone}`, '_blank');
     };
 
     return (
@@ -338,6 +347,13 @@ export function Clients() {
                                         <td className="px-6 py-4">
                                             <div className="flex justify-end gap-2">
                                                 <button
+                                                    onClick={() => handleWhatsApp(client)}
+                                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
+                                                    title="Conversar no WhatsApp"
+                                                >
+                                                    <MessageSquare className="w-4 h-4" />
+                                                </button>
+                                                <button
                                                     onClick={() => handleEdit(client)}
                                                     className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                                     title="Editar"
@@ -411,6 +427,13 @@ export function Clients() {
                                     </div>
                                 </div>
                                 <div className="flex gap-2 pt-2">
+                                    <button
+                                        onClick={() => handleWhatsApp(client)}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-50 text-green-600 rounded-lg text-sm font-semibold"
+                                    >
+                                        <MessageSquare className="w-4 h-4" />
+                                        WhatsApp
+                                    </button>
                                     <button
                                         onClick={() => handleEdit(client)}
                                         className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold"

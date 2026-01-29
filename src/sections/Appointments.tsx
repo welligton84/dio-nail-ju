@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useData } from '../hooks/useData';
 import type { AppointmentFormData, AppointmentStatus } from '../types';
-import { Plus, Calendar, Trash2, X, Clock, User } from 'lucide-react';
+import { Plus, Calendar, Trash2, X, Clock, User, MessageSquare } from 'lucide-react';
 
 const TIMES = [
     '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -20,6 +20,43 @@ const STATUS_CONFIG: Record<AppointmentStatus, { label: string; color: string; b
 export function Appointments() {
     const { clients, services, appointments, addAppointment, updateAppointment, deleteAppointment } = useData();
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+    const handleStatusChange = async (id: string, newStatus: AppointmentStatus) => {
+        await updateAppointment(id, { status: newStatus });
+
+        if (newStatus === 'confirmed') {
+            const apt = appointments.find(a => a.id === id);
+            const client = clients.find(c => c.id === apt?.clientId);
+            if (apt && client && client.phone) {
+                const dateFormatted = new Date(apt.date).toLocaleDateString('pt-BR');
+                const message = `Olá ${client.name}! Confirmamos seu agendamento no Studio Nail Ju para o dia ${dateFormatted} às ${apt.time}. Te esperamos! ✨💅`;
+
+                const sanitizedPhone = client.phone.replace(/\D/g, '');
+                const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
+                    ? `55${sanitizedPhone}`
+                    : sanitizedPhone;
+
+                const url = `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+            }
+        }
+    };
+
+    const handleWhatsAppManual = (aptId: string) => {
+        const apt = appointments.find(a => a.id === aptId);
+        const client = clients.find(c => c.id === apt?.clientId);
+        if (apt && client && client.phone) {
+            const dateFormatted = new Date(apt.date).toLocaleDateString('pt-BR');
+            const message = `Olá ${client.name}! Gostaria de confirmar seu agendamento do dia ${dateFormatted} às ${apt.time} no Studio Nail Ju? ✨💅`;
+
+            const sanitizedPhone = client.phone.replace(/\D/g, '');
+            const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
+                ? `55${sanitizedPhone}`
+                : sanitizedPhone;
+
+            window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+    };
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<AppointmentFormData>({
         clientId: '',
@@ -310,7 +347,7 @@ export function Appointments() {
                                                 <p className="text-[10px] text-gray-400 uppercase font-bold mb-1 sm:hidden ml-1">Status</p>
                                                 <select
                                                     value={apt.status}
-                                                    onChange={(e) => updateAppointment(apt.id, { status: e.target.value as AppointmentStatus })}
+                                                    onChange={(e) => handleStatusChange(apt.id, e.target.value as AppointmentStatus)}
                                                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-pink-500 outline-none bg-white shadow-sm"
                                                 >
                                                     <option value="scheduled">Agendado</option>
@@ -320,14 +357,21 @@ export function Appointments() {
                                                     <option value="no-show">Não compareceu</option>
                                                 </select>
                                             </div>
-                                            <div className="flex-none sm:flex-1">
-                                                <p className="text-[10px] text-gray-400 uppercase font-bold mb-1 sm:hidden text-center">Ação</p>
+                                            <div className="flex gap-2 w-full sm:w-auto">
+                                                <button
+                                                    onClick={() => handleWhatsAppManual(apt.id)}
+                                                    className="flex-1 flex items-center justify-center gap-2 text-green-600 hover:text-white hover:bg-green-500 border border-green-100 py-2.5 rounded-xl transition-all font-semibold"
+                                                    title="Enviar WhatsApp"
+                                                >
+                                                    <MessageSquare className="w-4 h-4" />
+                                                    <span className="sm:inline">WhatsApp</span>
+                                                </button>
                                                 <button
                                                     onClick={() => handleDelete(apt.id)}
-                                                    className="w-full flex items-center justify-center gap-2 text-red-500 hover:text-white hover:bg-red-500 border border-red-100 sm:border-transparent py-2.5 sm:py-2 rounded-xl transition-all font-semibold"
+                                                    className="sm:flex-none flex items-center justify-center gap-2 text-red-500 hover:text-white hover:bg-red-500 border border-red-100 py-2.5 px-3 rounded-xl transition-all font-semibold"
+                                                    title="Excluir"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
-                                                    <span className="sm:inline">Excluir</span>
                                                 </button>
                                             </div>
                                         </div>

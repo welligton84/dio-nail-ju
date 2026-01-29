@@ -133,11 +133,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const updateAppointment = async (id: string, data: Partial<Appointment>) => {
         if (!db) return;
-        const currentApt = appointments.find(a => a.id === id);
-        if (currentApt && data.status === 'confirmed' && currentApt.status !== 'confirmed') {
-            console.log(`[NOTIFICAÇÃO] Enviando SMS e E-mail para ${currentApt.clientName}...`);
-            alert(`✅ Notificações enviadas para ${currentApt.clientName} (Email & SMS)`);
-        }
         await updateDoc(doc(db, 'appointments', id), data);
     };
 
