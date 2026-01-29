@@ -94,22 +94,22 @@ export function Finance() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Financeiro</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Financeiro</h1>
                     <p className="text-gray-500 mt-1">Controle de receitas e despesas</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
                     <button
                         onClick={() => handleOpenForm('income')}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all shadow-lg"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all shadow-lg text-sm sm:text-base"
                     >
-                        <TrendingUp className="w-5 h-5" />
+                        <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
                         Receita
                     </button>
                     <button
                         onClick={() => handleOpenForm('expense')}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all shadow-lg"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all shadow-lg text-sm sm:text-base"
                     >
-                        <TrendingDown className="w-5 h-5" />
+                        <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />
                         Despesa
                     </button>
                 </div>
@@ -280,7 +280,8 @@ export function Finance() {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
                             <tr>
@@ -305,13 +306,13 @@ export function Finance() {
                                 sortedRecords.map((record) => (
                                     <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 text-sm text-gray-700">
-                                            <span className="flex items-center gap-2">
+                                            <span className="flex items-center gap-2 whitespace-nowrap">
                                                 <Calendar className="w-4 h-4 text-gray-400" />
                                                 {formatDate(record.date)}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${record.type === 'income'
+                                            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${record.type === 'income'
                                                 ? 'bg-green-100 text-green-800'
                                                 : 'bg-red-100 text-red-800'
                                                 }`}>
@@ -320,7 +321,7 @@ export function Finance() {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-700">{record.category}</td>
                                         <td className="px-6 py-4 text-sm text-gray-700">{record.description}</td>
-                                        <td className={`px-6 py-4 text-right font-semibold ${record.type === 'income' ? 'text-green-600' : 'text-red-600'
+                                        <td className={`px-6 py-4 text-right font-semibold whitespace-nowrap ${record.type === 'income' ? 'text-green-600' : 'text-red-600'
                                             }`}>
                                             {record.type === 'income' ? '+' : '-'} {formatCurrency(record.value)}
                                         </td>
@@ -338,6 +339,46 @@ export function Finance() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-100">
+                    {sortedRecords.length === 0 ? (
+                        <div className="px-6 py-12 text-center text-gray-500">
+                            <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                            <p>Nenhum registro encontrado</p>
+                        </div>
+                    ) : (
+                        sortedRecords.map((record) => (
+                            <div key={record.id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`p-2 rounded-lg ${record.type === 'income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                            {record.type === 'income' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                                        </span>
+                                        <div>
+                                            <p className="text-xs text-gray-500 font-medium">{formatDate(record.date)}</p>
+                                            <p className="font-bold text-gray-900">{record.description}</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDelete(record.id)}
+                                        className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between pt-1">
+                                    <span className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded-md font-medium">
+                                        {record.category}
+                                    </span>
+                                    <span className={`font-bold text-lg ${record.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {record.type === 'income' ? '+' : '-'} {formatCurrency(record.value)}
+                                    </span>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>

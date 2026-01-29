@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useData } from '../hooks/useData';
 import type { ClientFormData } from '../types';
-import { Plus, Search, Edit2, Trash2, User, Phone, Mail, Calendar, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X } from 'lucide-react';
 
 export function Clients() {
     const { clients, addClient, updateClient, deleteClient } = useData();
@@ -12,16 +12,35 @@ export function Clients() {
         name: '',
         phone: '',
         email: '',
+        cpf: '',
         birthDate: '',
     });
 
     const filteredClients = clients.filter(client =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone.includes(searchTerm)
+        client.phone.includes(searchTerm) ||
+        (client.cpf && client.cpf.includes(searchTerm))
     );
 
+    const formatCPF = (value: string) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d)/, '$1.$2')
+            .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+            .replace(/(-\d{2})\d+?$/, '$1');
+    };
+
+    const formatPhone = (value: string) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/(\d{2})(\d)/, '($1) $2')
+            .replace(/(\d{5})(\d)/, '$1-$2')
+            .replace(/(-\d{4})\d+?$/, '$1');
+    };
+
     const resetForm = () => {
-        setFormData({ name: '', phone: '', email: '', birthDate: '' });
+        setFormData({ name: '', phone: '', email: '', cpf: '', birthDate: '' });
         setEditingClient(null);
         setShowForm(false);
     };
@@ -42,6 +61,7 @@ export function Clients() {
             name: client.name,
             phone: client.phone,
             email: client.email || '',
+            cpf: client.cpf || '',
             birthDate: client.birthDate || '',
         });
         setShowForm(true);
@@ -62,12 +82,12 @@ export function Clients() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Clientes</h1>
                     <p className="text-gray-500 mt-1">Gerencie seus clientes</p>
                 </div>
                 <button
-                    onClick={() => { setShowForm(true); setEditingClient(null); setFormData({ name: '', phone: '', email: '', birthDate: '' }); }}
-                    className="flex items-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
+                    onClick={() => { setShowForm(true); setEditingClient(null); setFormData({ name: '', phone: '', email: '', cpf: '', birthDate: '' }); }}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
                 >
                     <Plus className="w-5 h-5" />
                     Novo Cliente
@@ -80,7 +100,7 @@ export function Clients() {
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                         type="text"
-                        placeholder="Buscar por nome ou telefone..."
+                        placeholder="Buscar por nome, telefone ou CPF..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
@@ -90,8 +110,8 @@ export function Clients() {
 
             {/* Form Modal */}
             {showForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                             <h2 className="text-xl font-semibold text-gray-900">
                                 {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
@@ -114,17 +134,27 @@ export function Clients() {
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                                    <input
+                                        type="text"
+                                        placeholder="000.000.000-00"
+                                        value={formData.cpf}
+                                        onChange={(e) => setFormData({ ...formData, cpf: formatCPF(e.target.value) })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
                                     <input
                                         type="tel"
                                         placeholder="(00) 00000-0000"
                                         value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
                                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
                                         required
                                     />
                                 </div>
-                                <div>
+                                <div className="sm:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
                                     <input
                                         type="email"
@@ -144,17 +174,17 @@ export function Clients() {
                                     />
                                 </div>
                             </div>
-                            <div className="flex gap-3 pt-4">
+                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
                                 <button
                                     type="submit"
-                                    className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl hover:opacity-90 transition-all"
+                                    className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl hover:opacity-90 transition-all order-1 sm:order-2"
                                 >
                                     {editingClient ? 'Atualizar' : 'Cadastrar'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
+                                    className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1"
                                 >
                                     Cancelar
                                 </button>
@@ -164,14 +194,15 @@ export function Clients() {
                 </div>
             )}
 
-            {/* Clients Table */}
+            {/* Clients List/Table */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Nome</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Contato</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Contato / CPF</th>
                                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Visitas</th>
                                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Última Visita</th>
                                 <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Ações</th>
@@ -190,11 +221,11 @@ export function Clients() {
                                     <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500">
+                                                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500 shrink-0">
                                                     <User className="w-5 h-5" />
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-gray-900">{client.name}</p>
+                                                <div className="min-w-0">
+                                                    <p className="font-medium text-gray-900 truncate">{client.name}</p>
                                                     {client.birthDate && (
                                                         <p className="text-xs text-gray-500 flex items-center gap-1">
                                                             <Calendar className="w-3 h-3" />
@@ -205,19 +236,18 @@ export function Clients() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <p className="text-sm flex items-center gap-2 text-gray-700">
-                                                <Phone className="w-4 h-4 text-gray-400" />
+                                            <p className="text-sm flex items-center gap-2 text-gray-700 font-medium">
+                                                <Phone className="w-4 h-4 text-pink-400" />
                                                 {client.phone}
                                             </p>
-                                            {client.email && (
-                                                <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-                                                    <Mail className="w-4 h-4 text-gray-400" />
-                                                    {client.email}
+                                            {client.cpf && (
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    CPF: {client.cpf}
                                                 </p>
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                                            <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
                                                 {client.totalVisits} visitas
                                             </span>
                                         </td>
@@ -228,14 +258,14 @@ export function Clients() {
                                             <div className="flex justify-end gap-2">
                                                 <button
                                                     onClick={() => handleEdit(client)}
-                                                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                                     title="Editar"
                                                 >
                                                     <Edit2 className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(client.id)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors shadow-sm bg-white border border-gray-100"
                                                     title="Excluir"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -247,6 +277,74 @@ export function Clients() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-100">
+                    {filteredClients.length === 0 ? (
+                        <div className="px-6 py-12 text-center text-gray-500">
+                            <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                            <p>Nenhum cliente encontrado</p>
+                        </div>
+                    ) : (
+                        filteredClients.map((client) => (
+                            <div key={client.id} className="p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500 shrink-0">
+                                            <User className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900">{client.name}</p>
+                                            <p className="text-xs text-gray-500">Cadastrado em {formatDate(client.createdAt)}</p>
+                                        </div>
+                                    </div>
+                                    <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                        {client.totalVisits} visitas
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 pt-1">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold">Contato</p>
+                                        <p className="text-sm text-gray-700 flex items-center gap-1.5">
+                                            <Phone className="w-3.5 h-3.5 text-pink-400" />
+                                            {client.phone}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold">CPF</p>
+                                        <p className="text-sm text-gray-700">{client.cpf || '-'}</p>
+                                    </div>
+                                    {client.birthDate && (
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] text-gray-400 uppercase font-bold">Aniversário</p>
+                                            <p className="text-sm text-gray-700">{formatDate(client.birthDate)}</p>
+                                        </div>
+                                    )}
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] text-gray-400 uppercase font-bold">Última Visita</p>
+                                        <p className="text-sm text-gray-700">{client.lastVisit ? formatDate(client.lastVisit) : '-'}</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button
+                                        onClick={() => handleEdit(client)}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                        Editar
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(client.id)}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-semibold"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>

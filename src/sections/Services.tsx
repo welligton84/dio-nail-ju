@@ -86,12 +86,12 @@ export function Services() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Serviços</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Serviços</h1>
                     <p className="text-gray-500 mt-1">Gerencie os serviços oferecidos</p>
                 </div>
                 <button
                     onClick={() => { setShowForm(true); setEditingService(null); }}
-                    className="flex items-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
                 >
                     <Plus className="w-5 h-5" />
                     Novo Serviço

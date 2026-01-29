@@ -69,9 +69,9 @@ export function Dashboard() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-500 mt-1 capitalize">{formatDate()}</p>
+            <div className="flex flex-col gap-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+                <p className="text-gray-500 text-sm sm:text-base capitalize">{formatDate()}</p>
             </div>
 
             {/* Stats Cards */}
@@ -107,19 +107,22 @@ export function Dashboard() {
                 ) : (
                     <div className="space-y-3">
                         {todayAppointments.map((apt) => (
-                            <div key={apt.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-4">
-                                    <span className="bg-pink-100 text-pink-700 px-4 py-2 rounded-full font-semibold text-sm">
+                            <div key={apt.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors gap-3">
+                                <div className="flex items-center gap-3 sm:gap-4">
+                                    <span className="bg-pink-100 text-pink-700 px-3 py-1.5 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap">
                                         ⏱️ {apt.time}
                                     </span>
-                                    <div>
-                                        <p className="font-semibold text-gray-900">{apt.clientName}</p>
-                                        <p className="text-sm text-gray-500">{apt.services.map(s => s.name).join(', ')}</p>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-gray-900 truncate">{apt.clientName}</p>
+                                        <p className="text-xs sm:text-sm text-gray-500 truncate">{apt.services.map(s => s.name).join(', ')}</p>
                                     </div>
                                 </div>
-                                <span className="font-semibold text-green-600 text-lg">
-                                    {formatCurrency(apt.totalValue)}
-                                </span>
+                                <div className="flex justify-between sm:justify-end items-center sm:block">
+                                    <span className="text-[10px] text-gray-400 uppercase font-bold sm:hidden">Valor</span>
+                                    <span className="font-bold text-green-600 text-base sm:text-lg">
+                                        {formatCurrency(apt.totalValue)}
+                                    </span>
+                                </div>
                             </div>
                         ))}
                     </div>

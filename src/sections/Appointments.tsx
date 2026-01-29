@@ -107,12 +107,12 @@ export function Appointments() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Agendamentos</h1>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Agendamentos</h1>
                     <p className="text-gray-500 mt-1">Gerencie os agendamentos do studio</p>
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
                 >
                     <Plus className="w-5 h-5" />
                     Novo Agendamento
@@ -280,47 +280,56 @@ export function Appointments() {
                         <div className="space-y-4">
                             {dayAppointments.map((apt) => (
                                 <div key={apt.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <span className="bg-pink-100 text-pink-700 px-3 py-1.5 rounded-full font-semibold text-sm flex items-center gap-1">
-                                                    <Clock className="w-4 h-4" />
+                                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                                        <div className="flex-1 w-full sm:w-auto">
+                                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                <span className="bg-pink-100 text-pink-700 px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1">
+                                                    <Clock className="w-3.5 h-3.5" />
                                                     {apt.time}
                                                 </span>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_CONFIG[apt.status].bgColor} ${STATUS_CONFIG[apt.status].color}`}>
+                                                <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${STATUS_CONFIG[apt.status].bgColor} ${STATUS_CONFIG[apt.status].color}`}>
                                                     {STATUS_CONFIG[apt.status].label}
                                                 </span>
                                             </div>
-                                            <h3 className="font-semibold text-lg text-gray-900 flex items-center gap-2">
-                                                <User className="w-5 h-5 text-gray-400" />
-                                                {apt.clientName}
+                                            <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
+                                                <User className="w-5 h-5 text-pink-400 shrink-0" />
+                                                <span className="truncate">{apt.clientName}</span>
                                             </h3>
-                                            <p className="text-sm text-gray-500 mt-1">
+                                            <p className="text-xs sm:text-sm text-gray-500 mt-1.5 line-clamp-2">
                                                 {apt.services.map(s => s.name).join(', ')}
                                             </p>
-                                            <p className="text-lg font-semibold text-green-600 mt-2">
-                                                {formatCurrency(apt.totalValue)}
-                                            </p>
+                                            <div className="flex items-center justify-between sm:block mt-3 bg-gray-50 sm:bg-transparent p-3 sm:p-0 rounded-lg sm:rounded-none">
+                                                <span className="text-[10px] text-gray-400 uppercase font-bold sm:hidden">Valor Total</span>
+                                                <p className="text-xl font-bold text-green-600">
+                                                    {formatCurrency(apt.totalValue)}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="flex flex-col gap-2">
-                                            <select
-                                                value={apt.status}
-                                                onChange={(e) => updateAppointment(apt.id, { status: e.target.value as AppointmentStatus })}
-                                                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-500 outline-none"
-                                            >
-                                                <option value="scheduled">Agendado</option>
-                                                <option value="confirmed">Confirmado</option>
-                                                <option value="completed">Concluído</option>
-                                                <option value="cancelled">Cancelado</option>
-                                                <option value="no-show">Não compareceu</option>
-                                            </select>
-                                            <button
-                                                onClick={() => handleDelete(apt.id)}
-                                                className="flex items-center justify-center gap-1 text-red-500 hover:text-red-700 text-sm font-medium p-2 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                                Excluir
-                                            </button>
+                                        <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-48">
+                                            <div className="flex-1 sm:flex-none">
+                                                <p className="text-[10px] text-gray-400 uppercase font-bold mb-1 sm:hidden ml-1">Status</p>
+                                                <select
+                                                    value={apt.status}
+                                                    onChange={(e) => updateAppointment(apt.id, { status: e.target.value as AppointmentStatus })}
+                                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-pink-500 outline-none bg-white shadow-sm"
+                                                >
+                                                    <option value="scheduled">Agendado</option>
+                                                    <option value="confirmed">Confirmado</option>
+                                                    <option value="completed">Concluído</option>
+                                                    <option value="cancelled">Cancelado</option>
+                                                    <option value="no-show">Não compareceu</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex-none sm:flex-1">
+                                                <p className="text-[10px] text-gray-400 uppercase font-bold mb-1 sm:hidden text-center">Ação</p>
+                                                <button
+                                                    onClick={() => handleDelete(apt.id)}
+                                                    className="w-full flex items-center justify-center gap-2 text-red-500 hover:text-white hover:bg-red-500 border border-red-100 sm:border-transparent py-2.5 sm:py-2 rounded-xl transition-all font-semibold"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    <span className="sm:inline">Excluir</span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
