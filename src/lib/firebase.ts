@@ -9,12 +9,12 @@ import type { Functions } from 'firebase/functions';
 
 // Firebase configuration (Hardcoded for production reliability)
 const firebaseConfig = {
-    apiKey: "AIzaSyB7LMBUsrQGAoCOkTk-7a93mmQrKZo_6IM",
-    authDomain: "julianamirandaconcept.firebaseapp.com",
-    projectId: "julianamirandaconcept",
-    storageBucket: "julianamirandaconcept.firebasestorage.app",
-    messagingSenderId: "912211096106",
-    appId: "1:912211096106:web:885061956b696fbe738953",
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+    storageBucket: "",
+    messagingSenderId: "",
+    appId: "",
 };
 
 // Check if Firebase is configured
