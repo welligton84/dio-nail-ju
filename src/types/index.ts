@@ -8,6 +8,17 @@ export interface User {
     createdAt: string;
 }
 
+// Staff types
+export interface Staff {
+    id: string;
+    name: string;
+    phone: string;
+    role: string;
+    commission: number; // percentage (0-100)
+    active: boolean;
+    createdAt: string;
+}
+
 // Client types
 export interface Client {
     id: string;
@@ -55,7 +66,10 @@ export interface Appointment {
     status: AppointmentStatus;
     notes?: string;
     totalValue: number;
+    staffId: string;
+    staffName: string;
     createdAt: string;
+    paid: boolean;
 }
 
 export type AppointmentStatus =
@@ -75,7 +89,10 @@ export interface FinancialRecord {
     date: string;
     createdAt: string;
     appointmentId?: string; // Link to appointment if income from service
+    paymentMethod: 'pix' | 'cash' | 'card';
 }
+
+export type PaymentMethod = 'pix' | 'cash' | 'card';
 
 export const INCOME_CATEGORIES = ['Serviços', 'Produtos', 'Outros'] as const;
 export const EXPENSE_CATEGORIES = ['Produtos', 'Aluguel', 'Contas', 'Equipamentos', 'Marketing', 'Outros'] as const;
@@ -117,11 +134,22 @@ export interface AppointmentFormData {
     serviceIds: string[];
     notes: string;
     status: AppointmentStatus;
+    staffId: string;
+}
+
+export interface StaffFormData {
+    name: string;
+    phone: string;
+    role: string;
+    commission: number;
+    active: boolean;
 }
 
 export interface FinancialFormData {
+    type: 'income' | 'expense';
     category: string;
     description: string;
     value: string;
     date: string;
+    paymentMethod: 'pix' | 'cash' | 'card';
 }

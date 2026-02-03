@@ -2,8 +2,10 @@ import { initializeApp } from 'firebase/app';
 import type { FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import type { Auth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
+import type { Functions } from 'firebase/functions';
 
 // Firebase configuration (Hardcoded for production reliability)
 const firebaseConfig = {
@@ -23,6 +25,7 @@ export const isFirebaseConfigured = (): boolean => {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let functions: Functions | null = null;
 
 // Initialize Firebase only if configured
 if (isFirebaseConfigured()) {
@@ -30,6 +33,19 @@ if (isFirebaseConfigured()) {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
+        functions = getFunctions(app, 'southamerica-east1'); // Standard for Brazil
+
+        // Enable offline persistence
+        if (typeof window !== 'undefined') {
+            enableIndexedDbPersistence(db).catch((err) => {
+                if (err.code === 'failed-precondition') {
+                    console.warn('Persistence failed-precondition: Multiple tabs open?');
+                } else if (err.code === 'unimplemented') {
+                    console.warn('Persistence unimplemented: Browser doesn\'t support it.');
+                }
+            });
+        }
+
         console.log('Firebase initialized successfully');
     } catch (error) {
         console.error('Error initializing Firebase:', error);
@@ -38,4 +54,4 @@ if (isFirebaseConfigured()) {
     console.log('Firebase not configured. Running in demo mode with localStorage.');
 }
 
-export { app, auth, db };
+export { app, auth, db, functions };

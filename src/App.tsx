@@ -10,8 +10,9 @@ import { Appointments } from './sections/Appointments';
 import { Finance } from './sections/Finance';
 import { Reports } from './sections/Reports';
 import { Users } from './sections/Users';
+import { Staff } from './sections/Staff';
 
-type ViewType = 'dashboard' | 'clients' | 'appointments' | 'services' | 'finance' | 'reports' | 'users';
+type ViewType = 'dashboard' | 'clients' | 'appointments' | 'services' | 'finance' | 'reports' | 'users' | 'staff';
 
 function MainApp() {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
@@ -32,6 +33,8 @@ function MainApp() {
         return <Reports />;
       case 'users':
         return <Users />;
+      case 'staff':
+        return <Staff />;
       default:
         return <Dashboard />;
     }

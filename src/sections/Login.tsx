@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { Sparkles, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export function Login() {
     const [email, setEmail] = useState('');
@@ -30,11 +30,15 @@ export function Login() {
                 <div className="bg-white rounded-2xl shadow-2xl p-8 backdrop-blur-sm">
                     {/* Logo */}
                     <div className="text-center mb-8">
-                        <div className="w-20 h-20 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <Sparkles className="text-white w-10 h-10" />
+                        <div className="w-32 h-32 mx-auto mb-6">
+                            <img
+                                src="/logo.png"
+                                alt="Juliana Miranda Concept"
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                         <h1 className="text-3xl font-bold gradient-text">
-                            Studio Nail Ju
+                            Juliana Miranda Concept
                         </h1>
                         <p className="text-gray-500 mt-2">Sistema de Gestão</p>
                     </div>
@@ -111,7 +115,7 @@ export function Login() {
 
                 {/* Footer */}
                 <p className="text-center text-gray-400 text-sm mt-6">
-                    © 2024 Studio Nail Ju. Todos os direitos reservados.
+                    © 2024 Juliana Miranda Concept. Todos os direitos reservados.
                 </p>
             </div>
         </div>

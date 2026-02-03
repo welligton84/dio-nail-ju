@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useData } from '../hooks/useData';
 import type { ClientFormData } from '../types';
 import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X, MessageSquare } from 'lucide-react';
+import { WhatsAppModal } from '../components/shared/WhatsAppModal';
 
 export function Clients() {
     const { clients, addClient, updateClient, deleteClient } = useData();
@@ -17,6 +18,8 @@ export function Clients() {
         address: '',
     });
     const [historyClient, setHistoryClient] = useState<string | null>(null);
+    const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+    const [whatsAppClient, setWhatsAppClient] = useState<{ name: string; phone: string } | null>(null);
 
     const filteredClients = clients.filter(client =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,17 +79,15 @@ export function Clients() {
         }
     };
 
-    const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString('pt-BR');
+    const formatDate = (dateStr: string) => {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString('pt-BR');
     };
 
     const handleWhatsApp = (client: typeof clients[0]) => {
-        const sanitizedPhone = client.phone.replace(/\D/g, '');
-        const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
-            ? `55${sanitizedPhone}`
-            : sanitizedPhone;
-
-        window.open(`https://wa.me/${finalPhone}`, '_blank');
+        setWhatsAppClient({ name: client.name, phone: client.phone });
+        setShowWhatsAppModal(true);
     };
 
     return (
@@ -170,6 +171,17 @@ export function Clients() {
                     </div>
                 </div>
             )}
+
+            {/* WhatsApp Modal */}
+            <WhatsAppModal
+                isOpen={showWhatsAppModal}
+                onClose={() => {
+                    setShowWhatsAppModal(false);
+                    setWhatsAppClient(null);
+                }}
+                appointment={null}
+                clientPhone={whatsAppClient?.phone}
+            />
 
             {/* Search */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">

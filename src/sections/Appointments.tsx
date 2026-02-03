@@ -1,112 +1,184 @@
 import { useState } from 'react';
 import { useData } from '../hooks/useData';
-import type { AppointmentFormData, AppointmentStatus } from '../types';
-import { Plus, Calendar, Trash2, X, Clock, User, MessageSquare } from 'lucide-react';
+import type { Appointment, AppointmentFormData, AppointmentStatus, PaymentMethod } from '../types';
+import { Calendar, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Modal } from '../components/shared/Modal';
+import { WhatsAppModal } from '../components/shared/WhatsAppModal';
+import { AppointmentCard } from './appointments/AppointmentCard';
+import { AppointmentForm } from './appointments/AppointmentForm';
 
 const TIMES = [
-    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-    '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
+    '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+    '11:00', '11:30', '13:00', '13:30', '14:00', '14:30',
+    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+    '18:00', '18:30', '19:00'
 ];
 
-const STATUS_CONFIG: Record<AppointmentStatus, { label: string; color: string; bgColor: string }> = {
-    scheduled: { label: 'Agendado', color: 'text-yellow-800', bgColor: 'bg-yellow-100' },
-    confirmed: { label: 'Confirmado', color: 'text-blue-800', bgColor: 'bg-blue-100' },
-    completed: { label: 'Concluído', color: 'text-green-800', bgColor: 'bg-green-100' },
-    cancelled: { label: 'Cancelado', color: 'text-red-800', bgColor: 'bg-red-100' },
-    'no-show': { label: 'Não compareceu', color: 'text-gray-800', bgColor: 'bg-gray-100' },
-};
-
 export function Appointments() {
-    const { clients, services, appointments, addAppointment, updateAppointment, deleteAppointment } = useData();
+    const {
+        appointments,
+        services,
+        clients,
+        staff,
+        addAppointment,
+        updateAppointment,
+        deleteAppointment,
+        addFinancialRecord
+    } = useData();
+
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-    const handleStatusChange = async (id: string, newStatus: AppointmentStatus) => {
-        await updateAppointment(id, { status: newStatus });
+    // States for payment
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [finishingAppointment, setFinishingAppointment] = useState<Appointment | null>(null);
+    const [paymentValue, setPaymentValue] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
 
-        if (newStatus === 'confirmed') {
-            const apt = appointments.find(a => a.id === id);
-            const client = clients.find(c => c.id === apt?.clientId);
-            if (apt && client && client.phone) {
-                const dateFormatted = new Date(apt.date).toLocaleDateString('pt-BR');
-                const message = `Olá ${client.name}! Confirmamos seu agendamento no Studio Nail Ju para o dia ${dateFormatted} às ${apt.time}. Te esperamos! ✨💅`;
+    // States for WhatsApp
+    const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+    const [whatsAppAppointment, setWhatsAppAppointment] = useState<Appointment | null>(null);
+    const [whatsAppPhone, setWhatsAppPhone] = useState<string>('');
 
-                const sanitizedPhone = client.phone.replace(/\D/g, '');
-                const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
-                    ? `55${sanitizedPhone}`
-                    : sanitizedPhone;
-
-                const url = `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`;
-                window.open(url, '_blank');
-            }
-        }
-    };
-
-    const handleWhatsAppManual = (aptId: string) => {
-        const apt = appointments.find(a => a.id === aptId);
-        const client = clients.find(c => c.id === apt?.clientId);
-        if (apt && client && client.phone) {
-            const dateFormatted = new Date(apt.date).toLocaleDateString('pt-BR');
-            const message = `Olá ${client.name}! Gostaria de confirmar seu agendamento do dia ${dateFormatted} às ${apt.time} no Studio Nail Ju? ✨💅`;
-
-            const sanitizedPhone = client.phone.replace(/\D/g, '');
-            const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
-                ? `55${sanitizedPhone}`
-                : sanitizedPhone;
-
-            window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`, '_blank');
-        }
-    };
-    const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState<AppointmentFormData>({
         clientId: '',
-        date: selectedDate,
+        date: new Date().toISOString().split('T')[0],
         time: '09:00',
         serviceIds: [],
-        notes: '',
+        staffId: '',
         status: 'scheduled',
+        notes: '',
     });
 
-    const dayAppointments = appointments
-        .filter(a => a.date === selectedDate)
+    const dailyAppointments = appointments
+        .filter(apt => apt.date === selectedDate)
         .sort((a, b) => a.time.localeCompare(b.time));
 
     const resetForm = () => {
         setFormData({
             clientId: '',
-            date: selectedDate,
+            date: new Date().toISOString().split('T')[0],
             time: '09:00',
             serviceIds: [],
-            notes: '',
+            staffId: '',
             status: 'scheduled',
+            notes: '',
         });
         setShowForm(false);
+        setEditingId(null);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleEdit = (apt: Appointment) => {
+        setFormData({
+            clientId: apt.clientId,
+            date: apt.date,
+            time: apt.time,
+            serviceIds: apt.services.map(s => s.id),
+            staffId: apt.staffId,
+            status: apt.status,
+            notes: apt.notes || '',
+        });
+        setEditingId(apt.id);
+        setShowForm(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const selectedServices = services.filter(s => formData.serviceIds.includes(s.id));
-        const client = clients.find(c => c.id === formData.clientId);
-
-        if (!client || selectedServices.length === 0) return;
-
         const totalValue = selectedServices.reduce((sum, s) => sum + s.price, 0);
-        const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+        const duration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+        const clientName = clients.find(c => c.id === formData.clientId)?.name || '';
+        const staffName = staff.find(s => s.id === formData.staffId)?.name || '';
 
-        addAppointment({
-            clientId: client.id,
-            clientName: client.name,
+        const appointmentData = {
+            ...formData,
+            clientName,
+            staffName,
             services: selectedServices,
-            date: formData.date,
-            time: formData.time,
-            duration: totalDuration,
-            status: formData.status,
-            notes: formData.notes,
             totalValue,
-        });
+            duration,
+            paid: false,
+        };
+
+        if (editingId) {
+            await updateAppointment(editingId, appointmentData);
+        } else {
+            await addAppointment(appointmentData);
+        }
 
         resetForm();
+    };
+
+    const handleStatusChange = async (id: string, status: AppointmentStatus) => {
+        const apt = appointments.find(a => a.id === id);
+        if (!apt) return;
+
+        // If completing, ask if they want to pay now
+        if (status === 'completed' && !apt.paid) {
+            if (confirm("Deseja informar o pagamento agora?\n\nOK = Sim, pagar agora\nCancelar = Pagar depois")) {
+                handlePay(apt);
+            } else {
+                await updateAppointment(id, { status: 'completed' });
+            }
+            return;
+        }
+
+        await updateAppointment(id, { status });
+    };
+
+    const handlePay = (apt: Appointment) => {
+        setFinishingAppointment(apt);
+        setPaymentValue(apt.totalValue.toString());
+        setPaymentMethod('pix'); // Default
+        setShowPaymentModal(true);
+    };
+
+    const handleWhatsApp = (apt: Appointment) => {
+        const client = clients.find(c => c.id === apt.clientId);
+        if (client && client.phone) {
+            setWhatsAppAppointment(apt);
+            setWhatsAppPhone(client.phone);
+            setShowWhatsAppModal(true);
+        } else {
+            alert('Cliente sem telefone cadastrado.');
+        }
+    };
+
+    const confirmPayment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!finishingAppointment) return;
+
+        const value = parseFloat(paymentValue);
+
+        // 1. Update appointment status to completed and paid
+        await updateAppointment(finishingAppointment.id, {
+            status: 'completed',
+            totalValue: value,
+            paid: true
+        });
+
+        // 2. Add financial record
+        await addFinancialRecord({
+            type: 'income',
+            category: 'Serviços',
+            description: `Atendimento - ${finishingAppointment.clientName}`,
+            value: value,
+            date: finishingAppointment.date,
+            appointmentId: finishingAppointment.id,
+            paymentMethod: paymentMethod
+        });
+
+        setShowPaymentModal(false);
+        setFinishingAppointment(null);
+        setPaymentValue('');
+    };
+
+    const handleDelete = async (id: string) => {
+        if (confirm('Tem certeza que deseja excluir este agendamento?')) {
+            await deleteAppointment(id);
+        }
     };
 
     const handleServiceToggle = (serviceId: string) => {
@@ -118,270 +190,182 @@ export function Appointments() {
         }));
     };
 
-    const handleDelete = (id: string) => {
-        if (confirm('Tem certeza que deseja excluir este agendamento?')) {
-            deleteAppointment(id);
-        }
+    const changeDate = (days: number) => {
+        const date = new Date(selectedDate);
+        date.setDate(date.getDate() + days);
+        setSelectedDate(date.toISOString().split('T')[0]);
     };
 
     const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-        }).format(value);
-    };
-
-    const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString('pt-BR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-        });
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Agendamentos</h1>
-                    <p className="text-gray-500 mt-1">Gerencie os agendamentos do studio</p>
+                    <p className="text-gray-500 mt-1">Gerencie os horários do studio</p>
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg font-bold"
                 >
                     <Plus className="w-5 h-5" />
                     Novo Agendamento
                 </button>
             </div>
 
-            {/* Form Modal */}
-            {showForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white">
-                            <h2 className="text-xl font-semibold text-gray-900">Novo Agendamento</h2>
-                            <button onClick={resetForm} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
-                                <select
-                                    value={formData.clientId}
-                                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    required
-                                >
-                                    <option value="">Selecione um cliente</option>
-                                    {clients.map((client) => (
-                                        <option key={client.id} value={client.id}>{client.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
-                                    <input
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Horário *</label>
-                                    <select
-                                        value={formData.time}
-                                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    >
-                                        {TIMES.map((time) => (
-                                            <option key={time} value={time}>{time}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Serviços *</label>
-                                <div className="border border-gray-200 rounded-xl p-3 max-h-48 overflow-y-auto">
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {services.filter(s => s.active).map((service) => (
-                                            <label
-                                                key={service.id}
-                                                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${formData.serviceIds.includes(service.id)
-                                                    ? 'bg-pink-50 border border-pink-200'
-                                                    : 'hover:bg-gray-50 border border-transparent'
-                                                    }`}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.serviceIds.includes(service.id)}
-                                                    onChange={() => handleServiceToggle(service.id)}
-                                                    className="w-4 h-4 text-pink-500 rounded focus:ring-pink-500"
-                                                />
-                                                <div className="flex-1">
-                                                    <span className="text-sm font-medium text-gray-900">{service.name}</span>
-                                                    <span className="text-sm text-gray-500 ml-2">({formatCurrency(service.price)})</span>
-                                                </div>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                                {formData.serviceIds.length > 0 && (
-                                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 rounded-xl p-3">
-                                        <strong>Total:</strong> {formatCurrency(
-                                            services
-                                                .filter(s => formData.serviceIds.includes(s.id))
-                                                .reduce((sum, s) => sum + s.price, 0)
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>
-                                <input
-                                    type="text"
-                                    placeholder="Observações adicionais"
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="submit"
-                                    disabled={formData.serviceIds.length === 0}
-                                    className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Agendar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={resetForm}
-                                    className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Calendar and Appointments */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Calendar */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900 flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-pink-500" />
-                        Calendário
-                    </h2>
+            {/* Date Selector */}
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <button
+                    onClick={() => changeDate(-1)}
+                    className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-400"
+                >
+                    <ChevronLeft className="w-6 h-6" />
+                </button>
+                <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-pink-500" />
                     <input
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                        className="text-lg font-bold text-gray-900 border-none focus:ring-0 cursor-pointer p-0"
                     />
-                    <p className="text-sm text-gray-500 mt-3 capitalize">{formatDate(selectedDate)}</p>
                 </div>
+                <button
+                    onClick={() => changeDate(1)}
+                    className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-400"
+                >
+                    <ChevronRight className="w-6 h-6" />
+                </button>
+            </div>
 
-                {/* Day Appointments */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900">
-                        Agendamentos de {new Date(selectedDate).toLocaleDateString('pt-BR')}
+            {/* Appointments List */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h2 className="text-lg font-bold text-gray-900">
+                        Agenda do Dia
                     </h2>
-
-                    {dayAppointments.length === 0 ? (
+                    <span className="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-xs font-bold uppercase">
+                        {dailyAppointments.length} atendimentos
+                    </span>
+                </div>
+                <div className="p-6">
+                    {dailyAppointments.length === 0 ? (
                         <div className="text-center py-12">
-                            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500">Nenhum agendamento para este dia</p>
+                            <Calendar className="w-16 h-16 text-gray-100 mx-auto mb-4" />
+                            <p className="text-gray-500 font-medium">Nenhum agendamento para este dia.</p>
                             <button
-                                onClick={() => {
-                                    setFormData(prev => ({ ...prev, date: selectedDate }));
-                                    setShowForm(true);
-                                }}
-                                className="mt-4 text-pink-500 hover:text-pink-600 font-medium"
+                                onClick={() => setShowForm(true)}
+                                className="mt-4 text-pink-500 font-bold hover:underline"
                             >
-                                + Criar agendamento
+                                Agendar agora
                             </button>
                         </div>
                     ) : (
-                        <div className="space-y-4">
-                            {dayAppointments.map((apt) => (
-                                <div key={apt.id} className="border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow">
-                                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                                        <div className="flex-1 w-full sm:w-auto">
-                                            <div className="flex flex-wrap items-center gap-2 mb-3">
-                                                <span className="bg-pink-100 text-pink-700 px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1">
-                                                    <Clock className="w-3.5 h-3.5" />
-                                                    {apt.time}
-                                                </span>
-                                                <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${STATUS_CONFIG[apt.status].bgColor} ${STATUS_CONFIG[apt.status].color}`}>
-                                                    {STATUS_CONFIG[apt.status].label}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
-                                                <User className="w-5 h-5 text-pink-400 shrink-0" />
-                                                <span className="truncate">{apt.clientName}</span>
-                                            </h3>
-                                            <p className="text-xs sm:text-sm text-gray-500 mt-1.5 line-clamp-2">
-                                                {apt.services.map(s => s.name).join(', ')}
-                                            </p>
-                                            <div className="flex items-center justify-between sm:block mt-3 bg-gray-50 sm:bg-transparent p-3 sm:p-0 rounded-lg sm:rounded-none">
-                                                <span className="text-[10px] text-gray-400 uppercase font-bold sm:hidden">Valor Total</span>
-                                                <p className="text-xl font-bold text-green-600">
-                                                    {formatCurrency(apt.totalValue)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-48">
-                                            <div className="flex-1 sm:flex-none">
-                                                <p className="text-[10px] text-gray-400 uppercase font-bold mb-1 sm:hidden ml-1">Status</p>
-                                                <select
-                                                    value={apt.status}
-                                                    onChange={(e) => handleStatusChange(apt.id, e.target.value as AppointmentStatus)}
-                                                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-pink-500 outline-none bg-white shadow-sm"
-                                                >
-                                                    <option value="scheduled">Agendado</option>
-                                                    <option value="confirmed">Confirmado</option>
-                                                    <option value="completed">Concluído</option>
-                                                    <option value="cancelled">Cancelado</option>
-                                                    <option value="no-show">Não compareceu</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex gap-2 w-full sm:w-auto">
-                                                <button
-                                                    onClick={() => handleWhatsAppManual(apt.id)}
-                                                    className="flex-1 flex items-center justify-center gap-2 text-green-600 hover:text-white hover:bg-green-500 border border-green-100 py-2.5 rounded-xl transition-all font-semibold"
-                                                    title="Enviar WhatsApp"
-                                                >
-                                                    <MessageSquare className="w-4 h-4" />
-                                                    <span className="sm:inline">WhatsApp</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(apt.id)}
-                                                    className="sm:flex-none flex items-center justify-center gap-2 text-red-500 hover:text-white hover:bg-red-500 border border-red-100 py-2.5 px-3 rounded-xl transition-all font-semibold"
-                                                    title="Excluir"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {dailyAppointments.map((apt) => (
+                                <AppointmentCard
+                                    key={apt.id}
+                                    appointment={apt}
+                                    onStatusChange={handleStatusChange}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    onPay={handlePay}
+                                    onWhatsApp={() => handleWhatsApp(apt)}
+                                />
                             ))}
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Modal Form */}
+            <Modal
+                isOpen={showForm}
+                onClose={resetForm}
+                title={editingId ? "Editar Agendamento" : "Novo Agendamento"}
+            >
+                <AppointmentForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    clients={clients}
+                    services={services}
+                    staff={staff}
+                    onSubmit={handleSubmit}
+                    onCancel={resetForm}
+                    handleServiceToggle={handleServiceToggle}
+                    formatCurrency={formatCurrency}
+                    editingId={editingId}
+                    TIMES={TIMES}
+                />
+            </Modal>
+
+            {/* Payment Modal */}
+            <Modal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                title="Registrar Pagamento"
+            >
+                <form onSubmit={confirmPayment} className="p-6 space-y-4">
+                    <p className="text-gray-600">
+                        Confirme os dados do pagamento para finalizar.
+                        <br />
+                        <span className="text-xs text-red-500 font-bold">⚠️ Após o pagamento, o agendamento não poderá ser alterado.</span>
+                    </p>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={paymentValue}
+                            onChange={(e) => setPaymentValue(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-lg font-bold text-gray-900"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
+                        <select
+                            value={paymentMethod}
+                            onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none bg-white font-medium"
+                            required
+                        >
+                            <option value="pix">PIX</option>
+                            <option value="cash">Dinheiro</option>
+                            <option value="card">Cartão</option>
+                        </select>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="submit"
+                            className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-md flex items-center justify-center gap-2"
+                        >
+                            <span>Confirmar Recebimento</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowPaymentModal(false)}
+                            className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-600 font-medium"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* WhatsApp Modal */}
+            <WhatsAppModal
+                isOpen={showWhatsAppModal}
+                onClose={() => setShowWhatsAppModal(false)}
+                appointment={whatsAppAppointment}
+                clientPhone={whatsAppPhone}
+            />
         </div>
     );
 }

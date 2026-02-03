@@ -14,6 +14,7 @@ export function Users() {
         email: '',
         role: 'employee' as 'admin' | 'employee',
         active: true,
+        password: '',
     });
     const [passwords, setPasswords] = useState({
         current: '',
@@ -39,9 +40,10 @@ export function Users() {
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
-        await addUser(newUserData);
+        const { password, ...userData } = newUserData;
+        await addUser(userData, password);
         setShowAddForm(false);
-        setNewUserData({ name: '', email: '', role: 'employee', active: true });
+        setNewUserData({ name: '', email: '', role: 'employee', active: true, password: '' });
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
@@ -137,6 +139,19 @@ export function Users() {
                                     <option value="admin">Administrador</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Provisória</label>
+                                <input
+                                    type="password"
+                                    value={newUserData.password}
+                                    onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                                    placeholder="Mínimo 6 caracteres"
+                                    required
+                                    minLength={6}
+                                />
+                                <p className="text-[10px] text-gray-400 mt-1">O usuário poderá trocar a senha após o primeiro login.</p>
+                            </div>
                             <div className="flex gap-3 pt-4">
                                 <button type="submit" className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl">Cadastrar</button>
                                 <button type="button" onClick={() => setShowAddForm(false)} className="px-6 py-3 border border-gray-200 rounded-xl">Cancelar</button>
@@ -174,44 +189,46 @@ export function Users() {
             </div>
 
             {/* Change Password Modal */}
-            {showPasswordForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-semibold text-gray-900">Alterar Senha</h2>
-                            <button onClick={() => setShowPasswordForm(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
+            {
+                showPasswordForm && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                                <h2 className="text-xl font-semibold text-gray-900">Alterar Senha</h2>
+                                <button onClick={() => setShowPasswordForm(false)} className="text-gray-400 hover:text-gray-600">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nova Senha</label>
+                                    <input
+                                        type="password"
+                                        value={passwords.new}
+                                        onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nova Senha</label>
+                                    <input
+                                        type="password"
+                                        value={passwords.confirm}
+                                        onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <button type="submit" className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl">Alterar Senha</button>
+                                    <button type="button" onClick={() => setShowPasswordForm(false)} className="px-6 py-3 border border-gray-200 rounded-xl">Cancelar</button>
+                                </div>
+                            </form>
                         </div>
-                        <form onSubmit={handleChangePassword} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nova Senha</label>
-                                <input
-                                    type="password"
-                                    value={passwords.new}
-                                    onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nova Senha</label>
-                                <input
-                                    type="password"
-                                    value={passwords.confirm}
-                                    onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
-                                    required
-                                />
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="submit" className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl">Alterar Senha</button>
-                                <button type="button" onClick={() => setShowPasswordForm(false)} className="px-6 py-3 border border-gray-200 rounded-xl">Cancelar</button>
-                            </div>
-                        </form>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Users List */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -270,6 +287,6 @@ export function Users() {
                     </table>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

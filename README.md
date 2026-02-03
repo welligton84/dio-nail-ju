@@ -1,4 +1,4 @@
-# Studio Nail Ju - Sistema de Gestão
+# Juliana Miranda Concept - Sistema de Gestão
 
 Sistema de gestão completo para salão de unhas desenvolvido com React, TypeScript, Vite e Tailwind CSS.
 
@@ -165,4 +165,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ---
 
-Desenvolvido com ❤️ para Studio Nail Ju
+Desenvolvido com ❤️ para Juliana Miranda Concept

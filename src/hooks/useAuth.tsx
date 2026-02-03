@@ -6,7 +6,8 @@ import {
     updatePassword
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, getDocs, limit, query } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth, db, functions } from '../lib/firebase';
+import { httpsCallable } from 'firebase/functions';
 import type { ReactNode } from 'react';
 import type { User } from '../types';
 
@@ -16,7 +17,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
-    addUser: (newUser: Omit<User, 'id' | 'createdAt'>) => Promise<void>;
+    addUser: (newUser: Omit<User, 'id' | 'createdAt'>, password?: string) => Promise<void>;
     changePassword: (newPassword: string) => Promise<void>;
 }
 
@@ -107,20 +108,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await signOut(auth);
     };
 
-    const addUser = async (newUser: Omit<User, 'id' | 'createdAt'>) => {
-        if (!db) return;
+    const addUser = async (newUser: Omit<User, 'id' | 'createdAt'>, password?: string) => {
+        if (!functions) return;
         try {
-            // Note: This only creates the profile in Firestore. 
-            // The user must still be created in Firebase Auth Console/Functions for security reasons.
-            // But we can at least show them in the list.
-            await setDoc(doc(collection(db, 'users')), {
+            const createUserAuth = httpsCallable(functions, 'createUserAuth');
+            await createUserAuth({
                 ...newUser,
-                createdAt: new Date().toISOString()
+                password: password || '123456' // Default if not provided
             });
-            alert('Perfil do usuário criado no banco de dados! Lembre-se de também criar o login (E-mail/Senha) no Console do Firebase para este usuário.');
-        } catch (error) {
-            console.error('Erro ao adicionar usuário:', error);
-            alert('Erro ao salvar usuário no banco de dados.');
+            alert('Usuário criado com sucesso no Authentication e no Banco de Dados!');
+        } catch (error: any) {
+            console.error('Erro ao adicionar usuário via Cloud Function:', error);
+            alert(`Erro ao criar usuário: ${error.message}`);
         }
     };
 

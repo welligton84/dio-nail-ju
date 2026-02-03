@@ -37,7 +37,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.onAppointmentUpdate = void 0;
+exports.createUserAuth = exports.onAppointmentUpdate = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const mail_1 = __importDefault(require("@sendgrid/mail"));
@@ -120,6 +120,42 @@ exports.onAppointmentUpdate = functions.firestore
         catch (error) {
             console.error('Erro ao processar notificações:', error);
         }
+    }
+});
+exports.createUserAuth = functions.region('southamerica-east1').https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Apenas usuários autenticados podem criar outros usuários.');
+    }
+    const { email, password, name, role } = data;
+    if (!email || !password || !name) {
+        throw new functions.https.HttpsError('invalid-argument', 'E-mail, senha e nome são obrigatórios.');
+    }
+    try {
+        const requesterDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
+        const requesterData = requesterDoc.data();
+        if (!requesterData || requesterData.role !== 'admin') {
+            throw new functions.https.HttpsError('permission-denied', 'Apenas administradores podem criar novos usuários.');
+        }
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName: name,
+        });
+        await admin.firestore().collection('users').doc(userRecord.uid).set({
+            name,
+            email,
+            role: role || 'employee',
+            active: true,
+            createdAt: new Date().toISOString()
+        });
+        return { success: true, uid: userRecord.uid };
+    }
+    catch (error) {
+        console.error('Erro ao criar usuário:', error);
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', error.message || 'Erro interno ao criar usuário');
     }
 });
 //# sourceMappingURL=index.js.map

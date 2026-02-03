@@ -40,12 +40,12 @@ export const onAppointmentUpdate = functions.firestore
                     const msg = {
                         to: clientEmail,
                         from: 'contato@julianamirandaconcept.com.br', // Deve ser um remetente verificado no SendGrid
-                        subject: 'Confirmação de Agendamento - Studio Nail Ju',
+                        subject: 'Confirmação de Agendamento - Juliana Miranda Concept',
                         text: `Olá ${clientName}! Seu agendamento para o dia ${dateFormatted} às ${time} foi confirmado. Valor: R$ ${totalValue.toFixed(2)}. Te esperamos!`,
                         html: `
                             <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
                                 <h2 style="color: #e91e63;">Olá ${clientName}! ✨</h2>
-                                <p>Sua beleza tem hora marcada no <strong>Studio Nail Ju</strong>.</p>
+                                <p>Sua beleza tem hora marcada no <strong>Juliana Miranda Concept</strong>.</p>
                                 <hr style="border: 0; border-top: 1px solid #eee;">
                                 <p><strong>Data:</strong> ${dateFormatted}</p>
                                 <p><strong>Horário:</strong> ${time}</p>
@@ -100,3 +100,51 @@ export const onAppointmentUpdate = functions.firestore
             }
         }
     });
+
+export const createUserAuth = functions.region('southamerica-east1').https.onCall(async (data, context) => {
+    // Basic security: Check if the requester is an admin in Firestore
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Apenas usuários autenticados podem criar outros usuários.');
+    }
+
+    const { email, password, name, role } = data;
+
+    if (!email || !password || !name) {
+        throw new functions.https.HttpsError('invalid-argument', 'E-mail, senha e nome são obrigatórios.');
+    }
+
+    try {
+        // 1. Check if the requester is admin
+        const requesterDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
+        const requesterData = requesterDoc.data();
+
+        if (!requesterData || requesterData.role !== 'admin') {
+            throw new functions.https.HttpsError('permission-denied', 'Apenas administradores podem criar novos usuários.');
+        }
+
+        // 2. Create the user in Firebase Auth
+        const userRecord = await admin.auth().createUser({
+            email,
+            password,
+            displayName: name,
+        });
+
+        // 3. Create the profile in Firestore
+        await admin.firestore().collection('users').doc(userRecord.uid).set({
+            name,
+            email,
+            role: role || 'employee',
+            active: true,
+            createdAt: new Date().toISOString()
+        });
+
+        return { success: true, uid: userRecord.uid };
+    } catch (error: any) {
+        console.error('Erro ao criar usuário:', error);
+        // If it's already a HttpsError, rethrow it
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', error.message || 'Erro interno ao criar usuário');
+    }
+});

@@ -1,277 +1,140 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useData } from '../hooks/useData';
-import type { FinancialFormData } from '../types';
+import type { FinancialFormData, FinancialRecord, PaymentMethod } from '../types';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../types';
-import { TrendingUp, TrendingDown, DollarSign, Trash2, X, Calendar } from 'lucide-react';
-
-type RecordType = 'income' | 'expense';
-type TabFilter = 'all' | 'income' | 'expense';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2 } from 'lucide-react';
+import { StatCard } from '../components/shared/StatCard';
+import { Modal } from '../components/shared/Modal';
+import { Table } from '../components/shared/Table';
 
 export function Finance() {
     const { financialRecords, addFinancialRecord, deleteFinancialRecord } = useData();
-    const [activeTab, setActiveTab] = useState<TabFilter>('all');
+    const [activeTab, setActiveTab] = useState<'all' | 'income' | 'expense'>('all');
     const [showForm, setShowForm] = useState(false);
-    const [recordType, setRecordType] = useState<RecordType>('income');
     const [formData, setFormData] = useState<FinancialFormData>({
+        type: 'income',
         category: '',
         description: '',
         value: '',
         date: new Date().toISOString().split('T')[0],
+        paymentMethod: 'pix'
     });
 
-    const filteredRecords = activeTab === 'all'
-        ? financialRecords
-        : financialRecords.filter(r => r.type === activeTab);
+    const filteredRecords = useMemo(() => {
+        return financialRecords
+            .filter((r: FinancialRecord) => activeTab === 'all' || r.type === activeTab)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [financialRecords, activeTab]);
 
-    const sortedRecords = [...filteredRecords].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
+    const totals = useMemo(() => {
+        const income = financialRecords
+            .filter((r) => r.type === 'income')
+            .reduce((sum, r) => sum + r.value, 0);
+        const expense = financialRecords
+            .filter((r) => r.type === 'expense')
+            .reduce((sum, r) => sum + r.value, 0);
+        return {
+            income,
+            expense,
+            profit: income - expense
+        };
+    }, [financialRecords]);
 
-    const monthlyIncome = financialRecords
-        .filter(r => r.type === 'income')
-        .reduce((sum, r) => sum + r.value, 0);
-
-    const monthlyExpenses = financialRecords
-        .filter(r => r.type === 'expense')
-        .reduce((sum, r) => sum + r.value, 0);
-
-    const balance = monthlyIncome - monthlyExpenses;
-
-    const resetForm = () => {
-        setFormData({
-            category: '',
-            description: '',
-            value: '',
-            date: new Date().toISOString().split('T')[0],
-        });
-        setShowForm(false);
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        addFinancialRecord({
-            type: recordType,
-            category: formData.category,
-            description: formData.description,
-            value: parseFloat(formData.value),
-            date: formData.date,
-        });
-        resetForm();
-    };
-
-    const handleOpenForm = (type: RecordType) => {
-        setRecordType(type);
-        setFormData({
-            category: '',
-            description: '',
-            value: '',
-            date: new Date().toISOString().split('T')[0],
-        });
-        setShowForm(true);
-    };
-
-    const handleDelete = (id: string) => {
-        if (confirm('Tem certeza que deseja excluir este registro?')) {
-            deleteFinancialRecord(id);
+    const getPaymentMethodLabel = (method: PaymentMethod) => {
+        switch (method) {
+            case 'pix': return 'PIX';
+            case 'cash': return 'Dinheiro';
+            case 'card': return 'Cartão';
+            default: return method;
         }
     };
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-        }).format(value);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await addFinancialRecord({
+            ...formData,
+            value: parseFloat(formData.value),
+        });
+        setShowForm(false);
+        setFormData({
+            type: 'income',
+            category: '',
+            description: '',
+            value: '',
+            date: new Date().toISOString().split('T')[0],
+            paymentMethod: 'pix'
+        });
     };
 
-    const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString('pt-BR');
+    const handleDelete = async (id: string) => {
+        if (confirm('Tem certeza que deseja excluir este registro?')) {
+            await deleteFinancialRecord(id);
+        }
     };
-
-    const categories = recordType === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Financeiro</h1>
-                    <p className="text-gray-500 mt-1">Controle de receitas e despesas</p>
+                    <p className="text-gray-500 mt-1">Controle suas entradas e saídas</p>
                 </div>
-                <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
-                    <button
-                        onClick={() => handleOpenForm('income')}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all shadow-lg text-sm sm:text-base"
-                    >
-                        <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
-                        Receita
-                    </button>
-                    <button
-                        onClick={() => handleOpenForm('expense')}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all shadow-lg text-sm sm:text-base"
-                    >
-                        <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />
-                        Despesa
-                    </button>
-                </div>
+                <button
+                    onClick={() => setShowForm(true)}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg font-bold"
+                >
+                    <Plus className="w-5 h-5" />
+                    Novo Registro
+                </button>
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Receitas do Mês</p>
-                            <p className="text-2xl font-bold text-green-600 mt-1">{formatCurrency(monthlyIncome)}</p>
-                        </div>
-                        <div className="bg-green-100 p-3 rounded-xl">
-                            <TrendingUp className="w-6 h-6 text-green-600" />
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Despesas do Mês</p>
-                            <p className="text-2xl font-bold text-red-600 mt-1">{formatCurrency(monthlyExpenses)}</p>
-                        </div>
-                        <div className="bg-red-100 p-3 rounded-xl">
-                            <TrendingDown className="w-6 h-6 text-red-600" />
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Saldo do Mês</p>
-                            <p className={`text-2xl font-bold mt-1 ${balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                                {formatCurrency(balance)}
-                            </p>
-                        </div>
-                        <div className="bg-blue-100 p-3 rounded-xl">
-                            <DollarSign className="w-6 h-6 text-blue-600" />
-                        </div>
-                    </div>
-                </div>
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <StatCard
+                    title="Receitas"
+                    value={formatCurrency(totals.income)}
+                    icon={TrendingUp}
+                    color="bg-green-500"
+                />
+                <StatCard
+                    title="Despesas"
+                    value={formatCurrency(totals.expense)}
+                    icon={TrendingDown}
+                    color="bg-red-500"
+                />
+                <StatCard
+                    title="Saldo"
+                    value={formatCurrency(totals.profit)}
+                    icon={DollarSign}
+                    color="bg-pink-500"
+                />
             </div>
 
-            {/* Form Modal */}
-            {showForm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                                {recordType === 'income' ? (
-                                    <>
-                                        <TrendingUp className="w-5 h-5 text-green-500" />
-                                        Nova Receita
-                                    </>
-                                ) : (
-                                    <>
-                                        <TrendingDown className="w-5 h-5 text-red-500" />
-                                        Nova Despesa
-                                    </>
-                                )}
-                            </h2>
-                            <button onClick={resetForm} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
-                                <select
-                                    value={formData.category}
-                                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    required
-                                >
-                                    <option value="">Selecione a categoria</option>
-                                    {categories.map((cat) => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição *</label>
-                                <input
-                                    type="text"
-                                    placeholder="Descrição do lançamento"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    required
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Valor (R$) *</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        placeholder="0,00"
-                                        value={formData.value}
-                                        onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
-                                    <input
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="submit"
-                                    className={`flex-1 py-3 text-white font-semibold rounded-xl transition-all ${recordType === 'income'
-                                        ? 'bg-green-500 hover:bg-green-600'
-                                        : 'bg-red-500 hover:bg-red-600'
-                                        }`}
-                                >
-                                    Registrar
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={resetForm}
-                                    className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Records Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Tabs */}
-                <div className="p-4 border-b border-gray-100">
-                    <div className="flex gap-2">
+            {/* Filters and List */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex bg-gray-50 p-1 rounded-xl w-full sm:w-auto">
                         <button
                             onClick={() => setActiveTab('all')}
-                            className={`px-4 py-2 rounded-xl font-medium transition-all ${activeTab === 'all' ? 'gradient-bg text-white' : 'border border-gray-200 hover:bg-gray-50'
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
-                            Todas
+                            Todos
                         </button>
                         <button
                             onClick={() => setActiveTab('income')}
-                            className={`px-4 py-2 rounded-xl font-medium transition-all ${activeTab === 'income' ? 'bg-green-500 text-white' : 'border border-gray-200 hover:bg-gray-50'
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'income' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             Receitas
                         </button>
                         <button
                             onClick={() => setActiveTab('expense')}
-                            className={`px-4 py-2 rounded-xl font-medium transition-all ${activeTab === 'expense' ? 'bg-red-500 text-white' : 'border border-gray-200 hover:bg-gray-50'
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             Despesas
@@ -279,108 +142,178 @@ export function Finance() {
                     </div>
                 </div>
 
-                {/* Table */}
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Data</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Tipo</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Categoria</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Descrição</th>
-                                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Valor</th>
-                                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-600">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {sortedRecords.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                                        <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                        <p>Nenhum registro encontrado</p>
-                                        <p className="text-sm text-gray-400 mt-1">Adicione receitas ou despesas</p>
-                                    </td>
-                                </tr>
-                            ) : (
-                                sortedRecords.map((record) => (
-                                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 text-sm text-gray-700">
-                                            <span className="flex items-center gap-2 whitespace-nowrap">
-                                                <Calendar className="w-4 h-4 text-gray-400" />
-                                                {formatDate(record.date)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${record.type === 'income'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
-                                                }`}>
-                                                {record.type === 'income' ? 'Receita' : 'Despesa'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-700">{record.category}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-700">{record.description}</td>
-                                        <td className={`px-6 py-4 text-right font-semibold whitespace-nowrap ${record.type === 'income' ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                            {record.type === 'income' ? '+' : '-'} {formatCurrency(record.value)}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => handleDelete(record.id)}
-                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Excluir"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Mobile Card View */}
-                <div className="md:hidden divide-y divide-gray-100">
-                    {sortedRecords.length === 0 ? (
-                        <div className="px-6 py-12 text-center text-gray-500">
-                            <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                            <p>Nenhum registro encontrado</p>
-                        </div>
-                    ) : (
-                        sortedRecords.map((record) => (
-                            <div key={record.id} className="p-4 space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-2">
-                                        <span className={`p-2 rounded-lg ${record.type === 'income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                                            {record.type === 'income' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                                        </span>
-                                        <div>
-                                            <p className="text-xs text-gray-500 font-medium">{formatDate(record.date)}</p>
-                                            <p className="font-bold text-gray-900">{record.description}</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => handleDelete(record.id)}
-                                        className="p-2 text-red-400 hover:text-red-600 transition-colors"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                <Table
+                    data={filteredRecords}
+                    emptyMessage="Nenhum registro encontrado."
+                    columns={[
+                        {
+                            header: 'Data',
+                            accessor: (r: FinancialRecord) => (
+                                <span className="text-gray-500">{new Date(r.date).toLocaleDateString('pt-BR')}</span>
+                            )
+                        },
+                        {
+                            header: 'Descrição',
+                            accessor: (r: FinancialRecord) => (
+                                <div className="max-w-[150px] sm:max-w-none">
+                                    <p className="font-bold text-gray-900 truncate">{r.description}</p>
+                                    <p className="text-xs text-gray-400 uppercase tracking-tighter">{r.category}</p>
                                 </div>
-                                <div className="flex items-center justify-between pt-1">
-                                    <span className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded-md font-medium">
-                                        {record.category}
-                                    </span>
-                                    <span className={`font-bold text-lg ${record.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                                        {record.type === 'income' ? '+' : '-'} {formatCurrency(record.value)}
-                                    </span>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
+                            )
+                        },
+                        {
+                            header: 'Método',
+                            accessor: (r: FinancialRecord) => (
+                                <span className="text-xs font-medium text-gray-500 uppercase">
+                                    {getPaymentMethodLabel(r.paymentMethod || 'pix')}
+                                </span>
+                            )
+                        },
+                        {
+                            header: 'Tipo',
+                            accessor: (r: FinancialRecord) => (
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${r.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                    {r.type === 'income' ? 'Receita' : 'Despesa'}
+                                </span>
+                            )
+                        },
+                        {
+                            header: 'Valor',
+                            accessor: (r: FinancialRecord) => (
+                                <span className={`font-bold ${r.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {r.type === 'income' ? '+' : '-'} {formatCurrency(r.value)}
+                                </span>
+                            )
+                        },
+                        {
+                            header: '',
+                            accessor: (r: FinancialRecord) => (
+                                <button
+                                    onClick={() => handleDelete(r.id)}
+                                    className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            ),
+                            className: 'text-right'
+                        }
+                    ]}
+                />
             </div>
+
+            {/* Modal Form */}
+            <Modal
+                isOpen={showForm}
+                onClose={() => setShowForm(false)}
+                title="Novo Registro Financeiro"
+            >
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+                        <div className="flex bg-gray-100 p-1 rounded-xl">
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, type: 'income', category: '' })}
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'income' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500'
+                                    }`}
+                            >
+                                Receita
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, type: 'expense', category: '' })}
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500'
+                                    }`}
+                            >
+                                Despesa
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+                        <select
+                            value={formData.category}
+                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                            required
+                        >
+                            <option value="">Selecione uma categoria</option>
+                            {(formData.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Descrição *</label>
+                        <input
+                            type="text"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                            placeholder="Descreva o registro"
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Valor *</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.value}
+                                onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                                placeholder="0,00"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
+                            <input
+                                type="date"
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
+                        <select
+                            value={formData.paymentMethod}
+                            onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as PaymentMethod })}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                            required
+                        >
+                            <option value="pix">PIX</option>
+                            <option value="cash">Dinheiro</option>
+                            <option value="card">Cartão</option>
+                        </select>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="submit"
+                            className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-md"
+                        >
+                            Salvar Registro
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-600 font-medium"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }

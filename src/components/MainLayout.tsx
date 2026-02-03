@@ -10,9 +10,10 @@ import {
     BarChart3,
     UserCog,
     LogOut,
-    Sparkles,
-    Menu
+    Menu,
+    Award
 } from 'lucide-react';
+import { InstallPrompt } from './shared/InstallPrompt';
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -27,6 +28,7 @@ const menuItems = [
     { id: 'services', label: 'Serviços', icon: Scissors },
     { id: 'finance', label: 'Financeiro', icon: DollarSign },
     { id: 'reports', label: 'Relatórios', icon: BarChart3 },
+    { id: 'staff', label: 'Profissionais', icon: Award },
     { id: 'users', label: 'Usuários', icon: UserCog },
 ];
 
@@ -46,6 +48,8 @@ export function MainLayout({ children, currentView, onNavigate }: MainLayoutProp
                 />
             )}
 
+            <InstallPrompt />
+
             {/* Sidebar */}
             <aside className={`
         fixed lg:static inset-y-0 left-0 z-50
@@ -57,11 +61,11 @@ export function MainLayout({ children, currentView, onNavigate }: MainLayoutProp
                 {/* Logo */}
                 <div className="p-6 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white shadow-lg">
-                            <Sparkles className="w-5 h-5" />
+                        <div className="w-10 h-10 flex items-center justify-center">
+                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-lg gradient-text">Studio Nail Ju</h1>
+                            <h1 className="font-bold text-lg gradient-text">Juliana Miranda Concept</h1>
                             <p className="text-xs text-gray-500">Sistema de Gestão</p>
                         </div>
                     </div>
@@ -77,8 +81,8 @@ export function MainLayout({ children, currentView, onNavigate }: MainLayoutProp
                                 setSidebarOpen(false);
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${currentView === item.id
-                                    ? 'bg-pink-50 text-pink-600 font-medium shadow-sm'
-                                    : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-pink-50 text-pink-600 font-medium shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-50'
                                 }`}
                         >
                             <item.icon className={`w-5 h-5 ${currentView === item.id ? 'text-pink-500' : 'text-gray-400'}`} />
