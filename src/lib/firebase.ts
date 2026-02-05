@@ -7,16 +7,6 @@ import type { Firestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import type { Functions } from 'firebase/functions';
 
-<<<<<<< HEAD
-// Firebase configuration (Hardcoded for production reliability)
-const firebaseConfig = {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: "",
-=======
 // Firebase configuration from environment variables
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -25,7 +15,6 @@ const firebaseConfig = {
     storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 };
 
 // Check if Firebase is configured

@@ -1,12 +1,7 @@
 import { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import { useAuth } from '../hooks/useAuth';
-import { Shield, User as UserIcon, Mail, CheckCircle, XCircle, Plus, X } from 'lucide-react';
-=======
 import { useAuth } from '../contexts/AuthContext';
 import { Shield, User as UserIcon, Mail, CheckCircle, XCircle, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { User } from '../types';
@@ -55,11 +50,7 @@ export function Users() {
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (passwords.new !== passwords.confirm) {
-<<<<<<< HEAD
-            alert('As senhas não coincidem!');
-=======
             toast.error('As senhas não coincidem!');
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             return;
         }
         await changePassword(passwords.new);
@@ -110,7 +101,7 @@ export function Users() {
             {/* Add User Modal */}
             {showAddForm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-md">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                             <h2 className="text-xl font-semibold text-gray-900">Novo Usuário</h2>
                             <button onClick={() => setShowAddForm(false)} className="text-gray-400 hover:text-gray-600">
@@ -297,6 +288,6 @@ export function Users() {
                     </table>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

@@ -1,29 +1,19 @@
 import { useState, useMemo } from 'react';
-<<<<<<< HEAD
-import { useData } from '../hooks/useData';
-=======
 import { useData } from '../contexts/DataContext';
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import type { FinancialFormData, FinancialRecord, PaymentMethod } from '../types';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../types';
-import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2 } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2, Calendar } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { Modal } from '../components/shared/Modal';
 import { Table } from '../components/shared/Table';
-<<<<<<< HEAD
-=======
 import { formatCurrency } from '../utils/currency';
-import { Calendar } from 'lucide-react';
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
 export function Finance() {
     const { financialRecords, addFinancialRecord, deleteFinancialRecord } = useData();
     const [activeTab, setActiveTab] = useState<'all' | 'income' | 'expense'>('all');
     const [showForm, setShowForm] = useState(false);
-<<<<<<< HEAD
-=======
 
-    // Period selection (same as Reports)
+    // Period selection
     const now = new Date();
     const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -49,7 +39,6 @@ export function Finance() {
         { value: 12, label: 'Dezembro' },
     ];
 
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     const [formData, setFormData] = useState<FinancialFormData>({
         type: 'income',
         category: '',
@@ -61,18 +50,6 @@ export function Finance() {
 
     const filteredRecords = useMemo(() => {
         return financialRecords
-<<<<<<< HEAD
-            .filter((r: FinancialRecord) => activeTab === 'all' || r.type === activeTab)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [financialRecords, activeTab]);
-
-    const totals = useMemo(() => {
-        const income = financialRecords
-            .filter((r) => r.type === 'income')
-            .reduce((sum, r) => sum + r.value, 0);
-        const expense = financialRecords
-            .filter((r) => r.type === 'expense')
-=======
             .filter((r: FinancialRecord) => {
                 const matchesTab = activeTab === 'all' || r.type === activeTab;
                 const matchesPeriod = isSelectedPeriod(r.date);
@@ -87,22 +64,13 @@ export function Finance() {
             .reduce((sum, r) => sum + r.value, 0);
         const expense = financialRecords
             .filter((r) => r.type === 'expense' && isSelectedPeriod(r.date))
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             .reduce((sum, r) => sum + r.value, 0);
         return {
             income,
             expense,
             profit: income - expense
         };
-<<<<<<< HEAD
-    }, [financialRecords]);
-
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-    };
-=======
     }, [financialRecords, selectedMonth, selectedYear]);
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
     const getPaymentMethodLabel = (method: PaymentMethod) => {
         switch (method) {
@@ -174,8 +142,6 @@ export function Finance() {
                 />
             </div>
 
-<<<<<<< HEAD
-=======
             {/* Period Selector */}
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -206,7 +172,6 @@ export function Finance() {
                 </div>
             </div>
 
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             {/* Filters and List */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

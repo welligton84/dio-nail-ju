@@ -1,9 +1,5 @@
 import { useState } from 'react';
-<<<<<<< HEAD
-import { useData } from '../hooks/useData';
-=======
 import { useData } from '../contexts/DataContext';
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import type { StaffFormData } from '../types';
 import { Plus, Search, Edit2, Trash2, User, Phone, X, Award, Percent } from 'lucide-react';
 
@@ -67,7 +63,6 @@ export function Staff() {
             deleteStaff(id);
         }
     };
-
 
     return (
         <div className="space-y-6">

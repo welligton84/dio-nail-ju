@@ -1,13 +1,4 @@
 import { useState } from 'react';
-<<<<<<< HEAD
-import { useData } from '../hooks/useData';
-import type { ClientFormData } from '../types';
-import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X, MessageSquare } from 'lucide-react';
-import { WhatsAppModal } from '../components/shared/WhatsAppModal';
-
-export function Clients() {
-    const { clients, addClient, updateClient, deleteClient } = useData();
-=======
 import { useData } from '../contexts/DataContext';
 import type { ClientFormData } from '../types';
 import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X, MessageSquare } from 'lucide-react';
@@ -17,7 +8,6 @@ import { formatDateBR } from '../utils/format';
 
 export function Clients() {
     const { clients, addClient, updateClient, deleteClient, appointments } = useData();
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingClient, setEditingClient] = useState<string | null>(null);
@@ -26,8 +16,18 @@ export function Clients() {
         phone: '',
         email: '',
         cpf: '',
+        cnpj: '',
         birthDate: '',
         address: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        neighborhood: '',
+        addressNumber: '',
+        complement: '',
+        companyName: '',
+        stateRegistration: '',
+        cityRegistration: ''
     });
     const [historyClient, setHistoryClient] = useState<string | null>(null);
     const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
@@ -36,31 +36,9 @@ export function Clients() {
     const filteredClients = clients.filter(client =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         client.phone.includes(searchTerm) ||
-        (client.cpf && client.cpf.includes(searchTerm))
+        (client.cpf && client.cpf.includes(searchTerm)) ||
+        (client.cnpj && client.cnpj.includes(searchTerm))
     );
-
-<<<<<<< HEAD
-    const formatCPF = (value: string) => {
-        return value
-            .replace(/\D/g, '')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d{1,2})/, '$1-$2')
-            .replace(/(-\d{2})\d+?$/, '$1');
-    };
-
-    const formatPhone = (value: string) => {
-        return value
-            .replace(/\D/g, '')
-            .replace(/(\d{2})(\d)/, '($1) $2')
-            .replace(/(\d{5})(\d)/, '$1-$2')
-            .replace(/(-\d{4})\d+?$/, '$1');
-    };
-
-    const resetForm = () => {
-        setFormData({ name: '', phone: '', email: '', cpf: '', birthDate: '', address: '' });
-=======
-
 
     const resetForm = () => {
         setFormData({
@@ -81,7 +59,6 @@ export function Clients() {
             stateRegistration: '',
             cityRegistration: ''
         });
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         setEditingClient(null);
         setShowForm(false);
     };
@@ -103,10 +80,6 @@ export function Clients() {
             phone: client.phone,
             email: client.email || '',
             cpf: client.cpf || '',
-<<<<<<< HEAD
-            birthDate: client.birthDate || '',
-            address: client.address || '',
-=======
             cnpj: client.cnpj || '',
             birthDate: client.birthDate || '',
             address: client.address || '',
@@ -119,7 +92,6 @@ export function Clients() {
             companyName: client.companyName || '',
             stateRegistration: client.stateRegistration || '',
             cityRegistration: client.cityRegistration || ''
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         });
         setShowForm(true);
     };
@@ -130,15 +102,7 @@ export function Clients() {
         }
     };
 
-<<<<<<< HEAD
-    const formatDate = (dateStr: string) => {
-        const [year, month, day] = dateStr.split('-').map(Number);
-        const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString('pt-BR');
-    };
-=======
     const formatDate = formatDateBR;
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
     const handleWhatsApp = (client: typeof clients[0]) => {
         setWhatsAppClient({ name: client.name, phone: client.phone });
@@ -154,7 +118,7 @@ export function Clients() {
                     <p className="text-gray-500 mt-1">Gerencie seus clientes</p>
                 </div>
                 <button
-                    onClick={() => { setShowForm(true); setEditingClient(null); setFormData({ name: '', phone: '', email: '', cpf: '', birthDate: '' }); }}
+                    onClick={() => { setShowForm(true); setEditingClient(null); resetForm(); }}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
                 >
                     <Plus className="w-5 h-5" />
@@ -177,10 +141,6 @@ export function Clients() {
                         </div>
                         <div className="p-6 max-h-[60vh] overflow-y-auto">
                             {(() => {
-<<<<<<< HEAD
-                                const { appointments } = useData();
-=======
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
                                 const clientApts = appointments
                                     .filter(a => a.clientId === historyClient)
                                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -201,11 +161,6 @@ export function Clients() {
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div>
                                                         <p className="font-bold text-gray-900">{formatDate(apt.date)} às {apt.time}</p>
-<<<<<<< HEAD
-                                                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${apt.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                                            }`}>
-                                                            {apt.status === 'completed' ? 'Concluído' : apt.status}
-=======
                                                         <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${apt.status === 'completed' ? 'bg-green-100 text-green-700' :
                                                             apt.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
                                                                 apt.status === 'confirmed' ? 'bg-purple-100 text-purple-700' :
@@ -219,7 +174,6 @@ export function Clients() {
                                                                         apt.status === 'cancelled' ? 'Cancelado' :
                                                                             apt.status === 'no-show' ? 'Não compareceu' :
                                                                                 apt.status}
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
                                                         </span>
                                                     </div>
                                                     <p className="font-bold text-pink-600">
@@ -273,100 +227,6 @@ export function Clients() {
 
             {/* Form Modal */}
             {showForm && (
-<<<<<<< HEAD
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-semibold text-gray-900">
-                                {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
-                            </h2>
-                            <button onClick={resetForm} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Nome completo"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
-                                    <input
-                                        type="text"
-                                        placeholder="000.000.000-00"
-                                        value={formData.cpf}
-                                        onChange={(e) => setFormData({ ...formData, cpf: formatCPF(e.target.value) })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
-                                    <input
-                                        type="tel"
-                                        placeholder="(00) 00000-0000"
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                        required
-                                    />
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
-                                    <input
-                                        type="email"
-                                        placeholder="email@exemplo.com"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    />
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
-                                    <input
-                                        type="date"
-                                        value={formData.birthDate}
-                                        onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    />
-                                </div>
-                                <div className="sm:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Rua, número, bairro..."
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                                <button
-                                    type="submit"
-                                    className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl hover:opacity-90 transition-all order-1 sm:order-2"
-                                >
-                                    {editingClient ? 'Atualizar' : 'Cadastrar'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={resetForm}
-                                    className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all order-2 sm:order-1"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-=======
                 <ClientForm
                     formData={formData}
                     setFormData={setFormData}
@@ -374,8 +234,6 @@ export function Clients() {
                     onCancel={resetForm}
                     editingClient={editingClient}
                 />
-
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             )}
 
             {/* Clients List/Table */}

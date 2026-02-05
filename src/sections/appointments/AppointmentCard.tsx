@@ -1,9 +1,6 @@
 import type { Appointment, AppointmentStatus } from '../../types';
 import { Clock, Scissors, User, DollarSign, MessageSquare, Trash2, Edit2 } from 'lucide-react';
-<<<<<<< HEAD
-=======
 import { formatCurrency } from '../../utils/currency';
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
 interface AppointmentCardProps {
     appointment: Appointment;
@@ -22,13 +19,6 @@ export function AppointmentCard({
     onPay,
     onWhatsApp
 }: AppointmentCardProps) {
-<<<<<<< HEAD
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-    };
-
-=======
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     const getStatusColor = (status: AppointmentStatus) => {
         switch (status) {
             case 'scheduled': return 'bg-blue-100 text-blue-700';

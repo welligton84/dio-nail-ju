@@ -62,12 +62,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
 
         setLoading(true);
-        let loadedCount = 0;
         const totalCollections = 5;
+        const loadedCollections = new Set<string>();
 
-        const checkLoading = () => {
-            loadedCount++;
-            if (loadedCount >= totalCollections) {
+        const checkLoading = (collectionName: string) => {
+            loadedCollections.add(collectionName);
+            if (loadedCollections.size >= totalCollections) {
                 setLoading(false);
             }
         };
@@ -77,41 +77,43 @@ export function DataProvider({ children }: { children: ReactNode }) {
             if (error.code === 'permission-denied') {
                 console.warn('Verifique as regras de segurança do Firestore no Console.');
             }
+            // Even if error, mark as loaded to prevent stuck spinner if rules block one collection
+            checkLoading(context);
         };
 
         // Clients listener
         const qClients = query(collection(db, 'clients'), orderBy('name'));
         const unsubscribeClients = onSnapshot(qClients, (snapshot) => {
             setClients(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Client)));
-            if (loading) checkLoading();
+            checkLoading('clientes');
         }, (err) => handleError(err, 'clientes'));
 
         // Services listener
         const qServices = query(collection(db, 'services'), orderBy('name'));
         const unsubscribeServices = onSnapshot(qServices, (snapshot) => {
             setServices(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Service)));
-            if (loading) checkLoading();
+            checkLoading('serviços');
         }, (err) => handleError(err, 'serviços'));
 
         // Appointments listener
         const qAppointments = query(collection(db, 'appointments'), orderBy('date', 'desc'));
         const unsubscribeAppointments = onSnapshot(qAppointments, (snapshot) => {
             setAppointments(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Appointment)));
-            if (loading) checkLoading();
+            checkLoading('agendamentos');
         }, (err) => handleError(err, 'agendamentos'));
 
         // Financial Records listener
         const qFinancial = query(collection(db, 'financialRecords'), orderBy('date', 'desc'));
         const unsubscribeFinancial = onSnapshot(qFinancial, (snapshot) => {
             setFinancialRecords(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as FinancialRecord)));
-            if (loading) checkLoading();
+            checkLoading('financeiro');
         }, (err) => handleError(err, 'financeiro'));
 
         // Staff listener
         const qStaff = query(collection(db, 'staff'), orderBy('name'));
         const unsubscribeStaff = onSnapshot(qStaff, (snapshot) => {
             setStaff(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Staff)));
-            if (loading) checkLoading();
+            checkLoading('profissionais');
         }, (err) => handleError(err, 'profissionais'));
 
         return () => {
@@ -208,7 +210,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const getTodayAppointments = (): Appointment[] => {
         const today = getCurrentDate();
         return appointments
-            .filter(a => a.date === today)
+            .filter(a => a.date === today && a.status !== 'cancelled')
             .sort((a, b) => a.time.localeCompare(b.time));
     };
 
@@ -233,13 +235,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
             const appointmentsQuery = await getDocs(collection(db, 'appointments'));
             const clientsQuery = await getDocs(collection(db, 'clients'));
 
-            const appointments = appointmentsQuery.docs.map(doc => doc.data());
-            const clients = clientsQuery.docs;
+            const appointmentsData = appointmentsQuery.docs.map(doc => doc.data());
+            const clientsDocs = clientsQuery.docs;
 
             // 2. Update each client
-            for (const clientDoc of clients) {
+            for (const clientDoc of clientsDocs) {
                 const clientId = clientDoc.id;
-                const visitCount = appointments.filter(a => a.clientId === clientId).length;
+                const visitCount = appointmentsData.filter(a => a.clientId === clientId && a.status !== 'cancelled').length;
 
                 await updateDoc(doc(db, 'clients', clientId), {
                     totalVisits: visitCount
@@ -275,7 +277,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const dashboardStats: DashboardStats = useMemo(() => {
         const today = getCurrentDate();
 
-        const todayAppointments = appointments.filter(a => a.date === today);
+        const activeToday = appointments.filter(a => a.date === today && a.status !== 'cancelled');
 
         // Filter financial records by current month
         const monthlyRevenue = financialRecords
@@ -289,7 +291,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return {
             totalClients: clients.length,
             totalAppointments: appointments.length,
-            todayAppointments: todayAppointments.length,
+            todayAppointments: activeToday.length,
             monthlyRevenue,
             monthlyExpenses,
             monthlyProfit: monthlyRevenue - monthlyExpenses

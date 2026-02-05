@@ -1,42 +1,29 @@
-<<<<<<< HEAD
-import { useData } from '../hooks/useData';
-import { Users, Calendar, TrendingUp, DollarSign, Clock, MessageSquare } from 'lucide-react';
-import { StatCard } from '../components/shared/StatCard';
-import { StatCardSkeleton } from '../components/shared/Skeleton';
-=======
+import { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Users, Calendar, TrendingUp, DollarSign, Clock, MessageSquare } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { StatCardSkeleton } from '../components/shared/Skeleton';
 import { formatCurrency } from '../utils/currency';
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
+import { WhatsAppModal } from '../components/shared/WhatsAppModal';
+import type { Appointment } from '../types';
 
 export function Dashboard() {
     const { clients, dashboardStats, getTodayAppointments, loading, services } = useData();
     const todayAppointments = getTodayAppointments();
 
-    const handleWhatsAppManual = (aptId: string) => {
-        const apt = todayAppointments.find(a => a.id === aptId);
-        const client = clients.find(c => c.id === apt?.clientId);
-        if (apt && client && client.phone) {
-            const message = `Olá ${client.name}! Confirmamos seu agendamento para hoje às ${apt.time}. Esperamos você! ✨💅`;
+    const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+    const [whatsAppAppointment, setWhatsAppAppointment] = useState<Appointment | null>(null);
+    const [whatsAppPhone, setWhatsAppPhone] = useState<string>('');
 
-            const sanitizedPhone = client.phone.replace(/\D/g, '');
-            const finalPhone = sanitizedPhone.length === 11 || sanitizedPhone.length === 10
-                ? `55${sanitizedPhone}`
-                : sanitizedPhone;
-
-            window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    const handleWhatsApp = (apt: Appointment) => {
+        const client = clients.find(c => c.id === apt.clientId);
+        if (client && client.phone) {
+            setWhatsAppAppointment(apt);
+            setWhatsAppPhone(client.phone);
+            setShowWhatsAppModal(true);
         }
     };
 
-<<<<<<< HEAD
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-    };
-
-=======
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -126,7 +113,7 @@ export function Dashboard() {
                                                     {formatCurrency(apt.totalValue)}
                                                 </span>
                                                 <button
-                                                    onClick={() => handleWhatsAppManual(apt.id)}
+                                                    onClick={() => handleWhatsApp(apt)}
                                                     className="flex items-center gap-2 px-4 py-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors font-semibold border border-green-100"
                                                 >
                                                     <MessageSquare className="w-4 h-4" />
@@ -162,6 +149,14 @@ export function Dashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* WhatsApp Modal */}
+            <WhatsAppModal
+                isOpen={showWhatsAppModal}
+                onClose={() => setShowWhatsAppModal(false)}
+                appointment={whatsAppAppointment}
+                clientPhone={whatsAppPhone}
+            />
         </div>
     );
 }

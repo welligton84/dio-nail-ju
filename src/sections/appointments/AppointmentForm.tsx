@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Appointment, AppointmentFormData, Client, Service, Staff } from '../../types';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Clock, User as UserIcon } from 'lucide-react';
 
 interface AppointmentFormProps {
     formData: AppointmentFormData;
@@ -31,28 +31,48 @@ export function AppointmentForm({
     editingId,
     TIMES
 }: AppointmentFormProps) {
-    const isConflict = React.useMemo(() => {
-        if (!formData.staffId || !formData.date || !formData.time) return false;
-        return appointments.some(apt =>
-            apt.id !== editingId &&
-            apt.date === formData.date &&
-            apt.time === formData.time &&
-            apt.staffId === formData.staffId &&
-            apt.status !== 'cancelled'
-        );
-    }, [formData.date, formData.time, formData.staffId, appointments, editingId]);
+    // Check if a specific time is occupied by ANY professional
+    const getOccupiedStaffAt = (date: string, time: string) => {
+        return appointments
+            .filter(apt =>
+                apt.id !== editingId &&
+                apt.date === date &&
+                apt.time === time &&
+                apt.status !== 'cancelled'
+            )
+            .map(apt => apt.staffId);
+    };
+
+    const occupiedStaffIds = React.useMemo(() => {
+        if (!formData.date || !formData.time) return [];
+        return getOccupiedStaffAt(formData.date, formData.time);
+    }, [formData.date, formData.time, appointments, editingId]);
+
+    const isSpecificConflict = React.useMemo(() => {
+        if (!formData.staffId) return false;
+        return occupiedStaffIds.includes(formData.staffId);
+    }, [formData.staffId, occupiedStaffIds]);
+
+    // Check if all active staff are busy at this time
+    const isTimeFullyOccupied = React.useMemo(() => {
+        if (!formData.date || !formData.time) return false;
+        const occupiedCount = getOccupiedStaffAt(formData.date, formData.time).length;
+        const activeStaffCount = staff.filter(s => s.active).length;
+        return occupiedCount >= activeStaffCount && activeStaffCount > 0;
+    }, [formData.date, formData.time, appointments, staff, editingId]);
 
     return (
         <form onSubmit={onSubmit} className="p-6 space-y-4 text-left">
-            {isConflict && (
+            {isSpecificConflict && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
                     <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                     <div>
-                        <p className="text-sm font-bold text-amber-800">Horário Reocupado</p>
-                        <p className="text-xs text-amber-700">Este profissional já tem outro atendimento neste mesmo horário.</p>
+                        <p className="text-sm font-bold text-amber-800">Conflito de Horário</p>
+                        <p className="text-xs text-amber-700">Este profissional já possui outro agendamento neste horário.</p>
                     </div>
                 </div>
             )}
+
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
                 <select
@@ -81,31 +101,60 @@ export function AppointmentForm({
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Horário *</label>
-                    <select
-                        value={formData.time}
-                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                    >
-                        {TIMES.map((time) => (
-                            <option key={time} value={time}>{time}</option>
-                        ))}
-                    </select>
+                    <div className="relative">
+                        <select
+                            value={formData.time}
+                            onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                            className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none appearance-none bg-white ${isTimeFullyOccupied ? 'border-amber-300 bg-amber-50' : 'border-gray-200'}`}
+                        >
+                            {TIMES.map((time) => {
+                                const occupiedCount = getOccupiedStaffAt(formData.date, time).length;
+                                const isFull = occupiedCount >= staff.filter(s => s.active).length;
+                                return (
+                                    <option key={time} value={time}>
+                                        {time} {isFull ? '(Ocupado)' : occupiedCount > 0 ? `(${occupiedCount} ocupado)` : ''}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                        <Clock className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-4 h-4 ${isTimeFullyOccupied ? 'text-amber-500' : 'text-gray-400'} pointer-events-none`} />
+                    </div>
                 </div>
             </div>
 
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Profissional *</label>
-                <select
-                    value={formData.staffId}
-                    onChange={(e) => setFormData({ ...formData, staffId: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                    required
-                >
-                    <option value="">Selecione um profissional</option>
-                    {staff.filter(s => s.active).map((member) => (
-                        <option key={member.id} value={member.id}>{member.name}</option>
-                    ))}
-                </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {staff.filter(s => s.active).map((member) => {
+                        const isBusy = occupiedStaffIds.includes(member.id);
+                        return (
+                            <button
+                                key={member.id}
+                                type="button"
+                                onClick={() => setFormData({ ...formData, staffId: member.id })}
+                                className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${formData.staffId === member.id
+                                    ? 'border-pink-500 bg-pink-50 ring-1 ring-pink-500'
+                                    : isBusy
+                                        ? 'border-amber-100 bg-amber-50/50 opacity-70 grayscale-[0.5]'
+                                        : 'border-gray-100 hover:border-pink-200 hover:bg-gray-50'
+                                    }`}
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${formData.staffId === member.id ? 'bg-pink-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                                    <UserIcon className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`text-sm font-bold truncate ${formData.staffId === member.id ? 'text-pink-700' : 'text-gray-700'}`}>
+                                        {member.name}
+                                    </p>
+                                    {isBusy && (
+                                        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-tight">Ocupada neste horário</p>
+                                    )}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+                <input type="hidden" value={formData.staffId} required name="staffId" />
             </div>
 
             <div>
@@ -159,7 +208,7 @@ export function AppointmentForm({
             <div className="flex gap-3 pt-4">
                 <button
                     type="submit"
-                    disabled={formData.serviceIds.length === 0}
+                    disabled={formData.serviceIds.length === 0 || isSpecificConflict || !formData.staffId}
                     className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
                 >
                     {editingId ? 'Salvar Alterações' : 'Agendar'}

@@ -1,32 +1,14 @@
-<<<<<<< HEAD
-import { useMemo } from 'react';
-import { useData } from '../hooks/useData';
-import { BarChart3, Users, Calendar, DollarSign, TrendingUp, PieChart, RefreshCw } from 'lucide-react';
-import { StatCard } from '../components/shared/StatCard';
-import { Table } from '../components/shared/Table';
-=======
 import { useMemo, useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { BarChart3, Users, Calendar, DollarSign, TrendingUp, PieChart, RefreshCw } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { Table } from '../components/shared/Table';
 import { formatCurrency } from '../utils/currency';
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import type { Service, Appointment, FinancialRecord, Staff } from '../types';
 
 export function Reports() {
-    const { clients, services, appointments, financialRecords, dashboardStats, staff, syncVisitCounts } = useData();
-<<<<<<< HEAD
+    const { clients, services, appointments, financialRecords, staff, syncVisitCounts, dashboardStats } = useData();
 
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-        }).format(value);
-    };
-
-=======
-    
     // Get current month/year for initial state
     const now = new Date();
     const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
@@ -55,43 +37,19 @@ export function Reports() {
         { value: 12, label: 'Dezembro' },
     ];
 
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     // Calculate service popularity
     const serviceStats = useMemo(() => services.map((service: Service) => {
         const count = appointments.reduce((acc: number, apt: Appointment) => {
-            return acc + apt.services.filter(s => s.id === service.id).length;
+            return acc + (isSelectedMonth(apt.date) ? apt.services.filter(s => s.id === service.id).length : 0);
         }, 0);
         return { ...service, count };
-    }).sort((a: any, b: any) => b.count - a.count), [services, appointments]);
+    }).sort((a: any, b: any) => b.count - a.count), [services, appointments, selectedMonth, selectedYear]);
 
     // Calculate client frequency
     const topClients = useMemo(() => [...clients]
         .sort((a, b) => b.totalVisits - a.totalVisits)
         .slice(0, 5), [clients]);
 
-<<<<<<< HEAD
-    // Revenue by category
-    const revenueByCategory = useMemo(() => financialRecords
-        .filter((r: FinancialRecord) => r.type === 'income')
-        .reduce((acc: Record<string, number>, r: FinancialRecord) => {
-            acc[r.category] = (acc[r.category] || 0) + r.value;
-            return acc;
-        }, {}), [financialRecords]);
-
-    // Expenses by category
-    const expensesByCategory = useMemo(() => financialRecords
-        .filter((r: FinancialRecord) => r.type === 'expense')
-        .reduce((acc: Record<string, number>, r: FinancialRecord) => {
-            acc[r.category] = (acc[r.category] || 0) + r.value;
-            return acc;
-        }, {}), [financialRecords]);
-
-    // Calculate commissions by staff
-    const staffCommissions = useMemo(() => staff.map((member: Staff) => {
-        const completedApts = appointments.filter((apt: Appointment) =>
-            apt.staffId === member.id &&
-            apt.status === 'completed'
-=======
     // Revenue by category (filtered by selected month)
     const revenueByCategory = useMemo(() => financialRecords
         .filter((r: FinancialRecord) => r.type === 'income' && isSelectedMonth(r.date))
@@ -114,7 +72,6 @@ export function Reports() {
             apt.staffId === member.id &&
             apt.status === 'completed' &&
             isSelectedMonth(apt.date)
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         );
         const totalSales = completedApts.reduce((sum: number, apt: Appointment) => sum + apt.totalValue, 0);
         const commissionAmount = (totalSales * member.commission) / 100;
@@ -124,11 +81,7 @@ export function Reports() {
             commissionAmount,
             count: completedApts.length
         };
-<<<<<<< HEAD
-    }).sort((a, b) => b.totalSales - a.totalSales), [staff, appointments]);
-=======
     }).sort((a, b) => b.totalSales - a.totalSales), [staff, appointments, selectedMonth, selectedYear]);
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
     const commissionFooter = (
         <tr className="bg-gray-50 font-bold text-gray-900 border-t border-gray-100">
@@ -150,15 +103,6 @@ export function Reports() {
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Relatórios e Métricas</h1>
                     <p className="text-gray-500 mt-1">Visão geral do desempenho do seu negócio</p>
                 </div>
-<<<<<<< HEAD
-                <button
-                    onClick={() => syncVisitCounts()}
-                    className="flex items-center gap-2 px-4 py-2 bg-pink-100 text-pink-600 rounded-xl hover:bg-pink-200 transition-colors"
-                >
-                    <RefreshCw className="w-4 h-4" />
-                    <span className="text-sm font-semibold">Sincronizar Visitas</span>
-                </button>
-=======
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={() => syncVisitCounts()}
@@ -198,7 +142,6 @@ export function Reports() {
                         </select>
                     </div>
                 </div>
->>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             </div>
 
             {/* Summary Cards */}
