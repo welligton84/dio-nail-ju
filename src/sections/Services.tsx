@@ -84,7 +84,19 @@ export function Services() {
                     <p className="text-gray-500 mt-1">Gerencie os serviços oferecidos</p>
                 </div>
                 <button
-                    onClick={() => { setShowForm(true); setEditingService(null); }}
+                    onClick={() => {
+                        setFormData({
+                            name: '',
+                            description: '',
+                            price: '',
+                            duration: '',
+                            category: 'Manicure',
+                            color: '#F472B6',
+                            active: true,
+                        });
+                        setEditingService(null);
+                        setShowForm(true);
+                    }}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
                 >
                     <Plus className="w-5 h-5" />

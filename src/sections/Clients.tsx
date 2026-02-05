@@ -118,7 +118,28 @@ export function Clients() {
                     <p className="text-gray-500 mt-1">Gerencie seus clientes</p>
                 </div>
                 <button
-                    onClick={() => { setShowForm(true); setEditingClient(null); resetForm(); }}
+                    onClick={() => {
+                        setFormData({
+                            name: '',
+                            phone: '',
+                            email: '',
+                            cpf: '',
+                            cnpj: '',
+                            birthDate: '',
+                            address: '',
+                            city: '',
+                            state: '',
+                            zipCode: '',
+                            neighborhood: '',
+                            addressNumber: '',
+                            complement: '',
+                            companyName: '',
+                            stateRegistration: '',
+                            cityRegistration: ''
+                        });
+                        setEditingClient(null);
+                        setShowForm(true);
+                    }}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
                 >
                     <Plus className="w-5 h-5" />
