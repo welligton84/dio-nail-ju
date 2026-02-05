@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+=======
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export function Login() {
@@ -8,7 +14,19 @@ export function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+<<<<<<< HEAD
     const { login } = useAuth();
+=======
+    const { login, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/dashboard');
+        }
+    }, [isAuthenticated, navigate]);
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,6 +37,11 @@ export function Login() {
 
         if (!result.success) {
             setError(result.error || 'Erro ao fazer login');
+<<<<<<< HEAD
+=======
+        } else {
+            navigate('/dashboard');
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         }
         setIsLoading(false);
     };

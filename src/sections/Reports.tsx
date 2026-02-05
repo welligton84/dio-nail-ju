@@ -1,12 +1,22 @@
+<<<<<<< HEAD
 import { useMemo } from 'react';
 import { useData } from '../hooks/useData';
 import { BarChart3, Users, Calendar, DollarSign, TrendingUp, PieChart, RefreshCw } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { Table } from '../components/shared/Table';
+=======
+import { useMemo, useState } from 'react';
+import { useData } from '../contexts/DataContext';
+import { BarChart3, Users, Calendar, DollarSign, TrendingUp, PieChart, RefreshCw } from 'lucide-react';
+import { StatCard } from '../components/shared/StatCard';
+import { Table } from '../components/shared/Table';
+import { formatCurrency } from '../utils/currency';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import type { Service, Appointment, FinancialRecord, Staff } from '../types';
 
 export function Reports() {
     const { clients, services, appointments, financialRecords, dashboardStats, staff, syncVisitCounts } = useData();
+<<<<<<< HEAD
 
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
@@ -15,6 +25,37 @@ export function Reports() {
         }).format(value);
     };
 
+=======
+    
+    // Get current month/year for initial state
+    const now = new Date();
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+
+    // Helper function to check if a date matches selected month/year
+    const isSelectedMonth = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.getFullYear() === selectedYear && (date.getMonth() + 1) === selectedMonth;
+    };
+
+    // Generate year options (current year and previous 2 years)
+    const yearOptions = Array.from({ length: 3 }, (_, i) => now.getFullYear() - i);
+    const monthOptions = [
+        { value: 1, label: 'Janeiro' },
+        { value: 2, label: 'Fevereiro' },
+        { value: 3, label: 'Março' },
+        { value: 4, label: 'Abril' },
+        { value: 5, label: 'Maio' },
+        { value: 6, label: 'Junho' },
+        { value: 7, label: 'Julho' },
+        { value: 8, label: 'Agosto' },
+        { value: 9, label: 'Setembro' },
+        { value: 10, label: 'Outubro' },
+        { value: 11, label: 'Novembro' },
+        { value: 12, label: 'Dezembro' },
+    ];
+
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     // Calculate service popularity
     const serviceStats = useMemo(() => services.map((service: Service) => {
         const count = appointments.reduce((acc: number, apt: Appointment) => {
@@ -28,6 +69,7 @@ export function Reports() {
         .sort((a, b) => b.totalVisits - a.totalVisits)
         .slice(0, 5), [clients]);
 
+<<<<<<< HEAD
     // Revenue by category
     const revenueByCategory = useMemo(() => financialRecords
         .filter((r: FinancialRecord) => r.type === 'income')
@@ -49,6 +91,30 @@ export function Reports() {
         const completedApts = appointments.filter((apt: Appointment) =>
             apt.staffId === member.id &&
             apt.status === 'completed'
+=======
+    // Revenue by category (filtered by selected month)
+    const revenueByCategory = useMemo(() => financialRecords
+        .filter((r: FinancialRecord) => r.type === 'income' && isSelectedMonth(r.date))
+        .reduce((acc: Record<string, number>, r: FinancialRecord) => {
+            acc[r.category] = (acc[r.category] || 0) + r.value;
+            return acc;
+        }, {}), [financialRecords, selectedMonth, selectedYear]);
+
+    // Expenses by category (filtered by selected month)
+    const expensesByCategory = useMemo(() => financialRecords
+        .filter((r: FinancialRecord) => r.type === 'expense' && isSelectedMonth(r.date))
+        .reduce((acc: Record<string, number>, r: FinancialRecord) => {
+            acc[r.category] = (acc[r.category] || 0) + r.value;
+            return acc;
+        }, {}), [financialRecords, selectedMonth, selectedYear]);
+
+    // Calculate commissions by staff (filtered by selected month)
+    const staffCommissions = useMemo(() => staff.map((member: Staff) => {
+        const completedApts = appointments.filter((apt: Appointment) =>
+            apt.staffId === member.id &&
+            apt.status === 'completed' &&
+            isSelectedMonth(apt.date)
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         );
         const totalSales = completedApts.reduce((sum: number, apt: Appointment) => sum + apt.totalValue, 0);
         const commissionAmount = (totalSales * member.commission) / 100;
@@ -58,7 +124,11 @@ export function Reports() {
             commissionAmount,
             count: completedApts.length
         };
+<<<<<<< HEAD
     }).sort((a, b) => b.totalSales - a.totalSales), [staff, appointments]);
+=======
+    }).sort((a, b) => b.totalSales - a.totalSales), [staff, appointments, selectedMonth, selectedYear]);
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
     const commissionFooter = (
         <tr className="bg-gray-50 font-bold text-gray-900 border-t border-gray-100">
@@ -80,6 +150,7 @@ export function Reports() {
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Relatórios e Métricas</h1>
                     <p className="text-gray-500 mt-1">Visão geral do desempenho do seu negócio</p>
                 </div>
+<<<<<<< HEAD
                 <button
                     onClick={() => syncVisitCounts()}
                     className="flex items-center gap-2 px-4 py-2 bg-pink-100 text-pink-600 rounded-xl hover:bg-pink-200 transition-colors"
@@ -87,6 +158,47 @@ export function Reports() {
                     <RefreshCw className="w-4 h-4" />
                     <span className="text-sm font-semibold">Sincronizar Visitas</span>
                 </button>
+=======
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                        onClick={() => syncVisitCounts()}
+                        className="flex items-center gap-2 px-4 py-2 bg-pink-100 text-pink-600 rounded-xl hover:bg-pink-200 transition-colors"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                        <span className="text-sm font-semibold">Sincronizar Visitas</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Month/Year Selector */}
+            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">Período:</span>
+                    </div>
+                    <div className="flex gap-3 flex-1">
+                        <select
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                            className="flex-1 sm:flex-none px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm"
+                        >
+                            {monthOptions.map(month => (
+                                <option key={month.value} value={month.value}>{month.label}</option>
+                            ))}
+                        </select>
+                        <select
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(Number(e.target.value))}
+                            className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm"
+                        >
+                            {yearOptions.map(year => (
+                                <option key={year} value={year}>{year}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             </div>
 
             {/* Summary Cards */}

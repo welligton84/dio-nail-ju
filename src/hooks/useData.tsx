@@ -12,6 +12,11 @@ import {
     increment,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+<<<<<<< HEAD
+=======
+import { toast } from 'sonner';
+import { getCurrentDate, isCurrentMonth } from '../utils/date';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import type { ReactNode } from 'react';
 import type { Client, Service, Appointment, FinancialRecord, DashboardStats, Staff } from '../types';
 
@@ -121,7 +126,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         await addDoc(collection(db, 'clients'), {
             ...client,
             totalVisits: 0,
+<<<<<<< HEAD
             createdAt: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
+=======
+            createdAt: getCurrentDate()
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         });
     };
 
@@ -156,7 +165,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!db) return;
         await addDoc(collection(db, 'appointments'), {
             ...appointment,
+<<<<<<< HEAD
             createdAt: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
+=======
+            createdAt: getCurrentDate()
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         });
 
         // Update client last visit and increment visits
@@ -198,8 +211,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     const getTodayAppointments = (): Appointment[] => {
+<<<<<<< HEAD
         const now = new Date();
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+=======
+        const today = getCurrentDate();
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         return appointments
             .filter(a => a.date === today)
             .sort((a, b) => a.time.localeCompare(b.time));
@@ -210,7 +227,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!db) return;
         await addDoc(collection(db, 'financialRecords'), {
             ...record,
+<<<<<<< HEAD
             createdAt: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
+=======
+            createdAt: getCurrentDate()
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         });
     };
 
@@ -238,10 +259,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
                     totalVisits: visitCount
                 });
             }
+<<<<<<< HEAD
             alert('Visitas sincronizadas com sucesso!');
         } catch (error) {
             console.error('Erro ao sincronizar visitas:', error);
             alert('Erro ao sincronizar visitas.');
+=======
+            toast.success('Visitas sincronizadas com sucesso!');
+        } catch (error) {
+            console.error('Erro ao sincronizar visitas:', error);
+            toast.error('Erro ao sincronizar visitas.');
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         }
     };
 
@@ -250,7 +278,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!db) return;
         await addDoc(collection(db, 'staff'), {
             ...staffMember,
+<<<<<<< HEAD
             createdAt: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`
+=======
+            createdAt: getCurrentDate()
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         });
     };
 
@@ -266,6 +298,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Calculate dashboard stats
     const dashboardStats: DashboardStats = useMemo(() => {
+<<<<<<< HEAD
         const now = new Date();
         const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
@@ -277,6 +310,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         const monthlyExpenses = financialRecords
             .filter(r => r.type === 'expense')
+=======
+        const today = getCurrentDate();
+
+        const todayAppointments = appointments.filter(a => a.date === today);
+
+        // Filter financial records by current month
+        const monthlyRevenue = financialRecords
+            .filter(r => r.type === 'income' && isCurrentMonth(r.date))
+            .reduce((sum, r) => sum + r.value, 0);
+
+        const monthlyExpenses = financialRecords
+            .filter(r => r.type === 'expense' && isCurrentMonth(r.date))
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             .reduce((sum, r) => sum + r.value, 0);
 
         return {

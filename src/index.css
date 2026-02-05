@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
+<<<<<<< HEAD
 /* Custom styles for Studio Nail Ju */
+=======
+/* Custom styles for Juliana Miranda Concept */
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 * {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }

@@ -26,12 +26,30 @@ export interface Client {
     phone: string;
     email?: string;
     cpf?: string;
+<<<<<<< HEAD
+=======
+    cnpj?: string;
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     birthDate?: string;
     totalVisits: number;
     createdAt: string;
     lastVisit?: string;
     address?: string;
+<<<<<<< HEAD
     notes?: string;
+=======
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    neighborhood?: string;
+    addressNumber?: string;
+    complement?: string;
+    notes?: string;
+    // Campos para NFS-e
+    companyName?: string; // Razão Social (para PJ)
+    stateRegistration?: string; // Inscrição Estadual
+    cityRegistration?: string; // Inscrição Municipal
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 }
 
 // Service types
@@ -113,8 +131,23 @@ export interface ClientFormData {
     phone: string;
     email: string;
     cpf?: string;
+<<<<<<< HEAD
     birthDate: string;
     address?: string;
+=======
+    cnpj?: string;
+    birthDate: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    neighborhood?: string;
+    addressNumber?: string;
+    complement?: string;
+    companyName?: string;
+    stateRegistration?: string;
+    cityRegistration?: string;
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 }
 
 export interface ServiceFormData {

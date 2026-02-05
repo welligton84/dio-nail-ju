@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { DataProvider } from './hooks/useData';
@@ -60,6 +61,24 @@ function App() {
     <AuthProvider>
       <AppContent />
     </AuthProvider>
+=======
+import { Toaster } from 'sonner';
+import { RouterProvider } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { DataProvider } from './contexts/DataContext';
+import { router } from './routes';
+
+function App() {
+  return (
+    <>
+      <Toaster richColors closeButton />
+      <AuthProvider>
+        <DataProvider>
+          <RouterProvider router={router} />
+        </DataProvider>
+      </AuthProvider>
+    </>
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import { useData } from '../hooks/useData';
 import type { ClientFormData } from '../types';
 import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X, MessageSquare } from 'lucide-react';
@@ -6,6 +7,17 @@ import { WhatsAppModal } from '../components/shared/WhatsAppModal';
 
 export function Clients() {
     const { clients, addClient, updateClient, deleteClient } = useData();
+=======
+import { useData } from '../contexts/DataContext';
+import type { ClientFormData } from '../types';
+import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X, MessageSquare } from 'lucide-react';
+import { WhatsAppModal } from '../components/shared/WhatsAppModal';
+import { ClientForm } from '../components/ClientForm';
+import { formatDateBR } from '../utils/format';
+
+export function Clients() {
+    const { clients, addClient, updateClient, deleteClient, appointments } = useData();
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     const [searchTerm, setSearchTerm] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingClient, setEditingClient] = useState<string | null>(null);
@@ -27,6 +39,7 @@ export function Clients() {
         (client.cpf && client.cpf.includes(searchTerm))
     );
 
+<<<<<<< HEAD
     const formatCPF = (value: string) => {
         return value
             .replace(/\D/g, '')
@@ -46,6 +59,29 @@ export function Clients() {
 
     const resetForm = () => {
         setFormData({ name: '', phone: '', email: '', cpf: '', birthDate: '', address: '' });
+=======
+
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            phone: '',
+            email: '',
+            cpf: '',
+            cnpj: '',
+            birthDate: '',
+            address: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            neighborhood: '',
+            addressNumber: '',
+            complement: '',
+            companyName: '',
+            stateRegistration: '',
+            cityRegistration: ''
+        });
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         setEditingClient(null);
         setShowForm(false);
     };
@@ -67,8 +103,23 @@ export function Clients() {
             phone: client.phone,
             email: client.email || '',
             cpf: client.cpf || '',
+<<<<<<< HEAD
             birthDate: client.birthDate || '',
             address: client.address || '',
+=======
+            cnpj: client.cnpj || '',
+            birthDate: client.birthDate || '',
+            address: client.address || '',
+            city: client.city || '',
+            state: client.state || '',
+            zipCode: client.zipCode || '',
+            neighborhood: client.neighborhood || '',
+            addressNumber: client.addressNumber || '',
+            complement: client.complement || '',
+            companyName: client.companyName || '',
+            stateRegistration: client.stateRegistration || '',
+            cityRegistration: client.cityRegistration || ''
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         });
         setShowForm(true);
     };
@@ -79,11 +130,15 @@ export function Clients() {
         }
     };
 
+<<<<<<< HEAD
     const formatDate = (dateStr: string) => {
         const [year, month, day] = dateStr.split('-').map(Number);
         const date = new Date(year, month - 1, day);
         return date.toLocaleDateString('pt-BR');
     };
+=======
+    const formatDate = formatDateBR;
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
     const handleWhatsApp = (client: typeof clients[0]) => {
         setWhatsAppClient({ name: client.name, phone: client.phone });
@@ -122,7 +177,10 @@ export function Clients() {
                         </div>
                         <div className="p-6 max-h-[60vh] overflow-y-auto">
                             {(() => {
+<<<<<<< HEAD
                                 const { appointments } = useData();
+=======
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
                                 const clientApts = appointments
                                     .filter(a => a.clientId === historyClient)
                                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -143,9 +201,25 @@ export function Clients() {
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div>
                                                         <p className="font-bold text-gray-900">{formatDate(apt.date)} às {apt.time}</p>
+<<<<<<< HEAD
                                                         <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${apt.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                                                             }`}>
                                                             {apt.status === 'completed' ? 'Concluído' : apt.status}
+=======
+                                                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${apt.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                            apt.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                                                                apt.status === 'confirmed' ? 'bg-purple-100 text-purple-700' :
+                                                                    apt.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                                                                        apt.status === 'no-show' ? 'bg-orange-100 text-orange-700' :
+                                                                            'bg-gray-100 text-gray-600'
+                                                            }`}>
+                                                            {apt.status === 'completed' ? 'Concluído' :
+                                                                apt.status === 'scheduled' ? 'Agendado' :
+                                                                    apt.status === 'confirmed' ? 'Confirmado' :
+                                                                        apt.status === 'cancelled' ? 'Cancelado' :
+                                                                            apt.status === 'no-show' ? 'Não compareceu' :
+                                                                                apt.status}
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
                                                         </span>
                                                     </div>
                                                     <p className="font-bold text-pink-600">
@@ -199,6 +273,7 @@ export function Clients() {
 
             {/* Form Modal */}
             {showForm && (
+<<<<<<< HEAD
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-8">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
@@ -291,6 +366,16 @@ export function Clients() {
                         </form>
                     </div>
                 </div>
+=======
+                <ClientForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    onSubmit={handleSubmit}
+                    onCancel={resetForm}
+                    editingClient={editingClient}
+                />
+
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
             )}
 
             {/* Clients List/Table */}

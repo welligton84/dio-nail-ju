@@ -1,0 +1,113 @@
+﻿
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mC:/Dev/workspace[39m
+
+ [31mÔØ»[39m src/utils/format.test.ts [2m([22m[2m20 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 97[2mms[22m[39m
+     [32mÔ£ô[39m should format a valid CPF with 11 digits[32m 1[2mms[22m[39m
+     [32mÔ£ô[39m should handle partial CPF input[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should strip non-numeric characters[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should not exceed 14 characters (with formatting)[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should format a mobile phone with 11 digits[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should format a landline with 10 digits[32m 0[2mms[22m[39m
+[31m     [31m├ù[31m should handle partial input[39m[32m 6[2mms[22m[39m
+     [32mÔ£ô[39m should strip non-numeric characters[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should format a valid CNPJ with 14 digits[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should handle partial CNPJ input[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should strip non-numeric characters[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should format a valid CEP with 8 digits[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should handle partial CEP input[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should strip non-numeric characters[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should format ISO date to Brazilian format[32m 83[2mms[22m[39m
+     [32mÔ£ô[39m should return empty string for empty input[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should handle different months correctly[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should remove all non-digit characters[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should return only digits from mixed input[32m 0[2mms[22m[39m
+     [32mÔ£ô[39m should return empty string for non-numeric input[32m 0[2mms[22m[39m
+node.exe : 
+No linha:1 caractere:1
++ & "C:\Program Files\
+nodejs/node.exe" "C:\U
+sers\welligton.alves\A
+ppDat ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (:String) [   
+ ], RemoteExceptio    
+n
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»[39m[1m[41m 
+Failed Tests 1 [49m[
+22m[31mÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»[39m
+
+[41m[1m FAIL 
+[22m[49m src/utils/f
+ormat.test.ts[2m > 
+[22mformatPhone[2m 
+> [22mshould handle 
+partial input
+[31m[1mAssertionErro
+r[22m: expected '11' 
+to be '(11) ' // 
+Object.is 
+equality[39m
+
+Expected: [32m"[7m(
+[27m11[7m) 
+[27m"[39m
+Received: 
+[31m"11"[39m
+
+[36m [2mÔØ»[22m src
+/utils/format.test.ts:
+[2m42:35[22m[39m
+    [90m 40| [39m
+    [90m 41| [39m   
+ [34mit[39m([32m'sh
+ould handle partial in
+put'[39m[33m,[39m 
+() [33m=>[39m {
+    [90m 42| [39m   
+     [34mexpect[39m(
+[34mformatPhone[39m(
+[32m'11'[39m))[33m.
+[39m[34mtoBe[39m([
+32m'(11) 
+'[39m)[33m;[39m
+    [90m   | [39m   
+                      
+         [31m^[39m
+    [90m 43| [39m   
+     [34mexpect[39m(
+[34mformatPhone[39m(
+[32m'11999'[39m))[3
+3m.[39m[34mtoBe[39m
+([32m'(11) 
+999'[39m)[33m;[39m
+    [90m 44| [39m   
+     [34mexpect[39m(
+[34mformatPhone[39m(
+[32m'1199999'[39m))
+[33m.[39m[34mtoBe[3
+9m([32m'(11) 99999'[
+39m)[33m;[39m
+
+[31m[2mÔÄ»ÔÄ»ÔÄ»ÔÄ»Ô
+Ä»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ
+»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/1]ÔÄ
+»[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m19 passed[39m[22m[90m (20)[39m
+[2m   Start at [22m 12:31:53
+[2m   Duration [22m 2.61s[2m (transform 67ms, setup 0ms, import 89ms, tests 97ms, environment 2.07s)[22m
+

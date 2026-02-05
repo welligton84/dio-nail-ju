@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import { useData } from '../hooks/useData';
 import { Users, Calendar, TrendingUp, DollarSign, Clock, MessageSquare } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { StatCardSkeleton } from '../components/shared/Skeleton';
+=======
+import { useData } from '../contexts/DataContext';
+import { Users, Calendar, TrendingUp, DollarSign, Clock, MessageSquare } from 'lucide-react';
+import { StatCard } from '../components/shared/StatCard';
+import { StatCardSkeleton } from '../components/shared/Skeleton';
+import { formatCurrency } from '../utils/currency';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
 export function Dashboard() {
     const { clients, dashboardStats, getTodayAppointments, loading, services } = useData();
@@ -22,10 +30,13 @@ export function Dashboard() {
         }
     };
 
+<<<<<<< HEAD
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
+=======
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">

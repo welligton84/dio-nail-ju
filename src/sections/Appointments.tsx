@@ -1,17 +1,31 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import { useData } from '../hooks/useData';
+=======
+import { useData } from '../contexts/DataContext';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import type { Appointment, AppointmentFormData, AppointmentStatus, PaymentMethod } from '../types';
 import { Calendar, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Modal } from '../components/shared/Modal';
 import { WhatsAppModal } from '../components/shared/WhatsAppModal';
 import { AppointmentCard } from './appointments/AppointmentCard';
 import { AppointmentForm } from './appointments/AppointmentForm';
+<<<<<<< HEAD
 
 const TIMES = [
     '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
     '11:00', '11:30', '13:00', '13:30', '14:00', '14:30',
     '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
     '18:00', '18:30', '19:00'
+=======
+import { toast } from 'sonner';
+
+const TIMES = [
+    '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+    '18:00', '18:30', '19:00', '19:30', '20:00', '20:30'
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 ];
 
 export function Appointments() {
@@ -142,7 +156,11 @@ export function Appointments() {
             setWhatsAppPhone(client.phone);
             setShowWhatsAppModal(true);
         } else {
+<<<<<<< HEAD
             alert('Cliente sem telefone cadastrado.');
+=======
+            toast.error('Cliente sem telefone cadastrado.');
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         }
     };
 

@@ -1,7 +1,14 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import { useData } from '../hooks/useData';
 import type { ServiceFormData, ServiceCategory } from '../types';
 import { Plus, Edit2, Trash2, Clock, DollarSign, X } from 'lucide-react';
+=======
+import { useData } from '../contexts/DataContext';
+import type { ServiceFormData, ServiceCategory } from '../types';
+import { Plus, Edit2, Trash2, Clock, DollarSign, X } from 'lucide-react';
+import { formatCurrency } from '../utils/currency';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 
 const CATEGORIES: ServiceCategory[] = ['Manicure', 'Pedicure', 'Alongamento', 'Decoração', 'Spa', 'Outros'];
 const COLORS = ['#F472B6', '#A78BFA', '#60A5FA', '#34D399', '#FBBF24', '#F87171', '#818CF8', '#2DD4BF'];
@@ -74,6 +81,7 @@ export function Services() {
         }
     };
 
+<<<<<<< HEAD
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
@@ -81,6 +89,8 @@ export function Services() {
         }).format(value);
     };
 
+=======
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     return (
         <div className="space-y-6">
             {/* Header */}

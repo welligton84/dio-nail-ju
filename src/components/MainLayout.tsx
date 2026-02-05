@@ -1,6 +1,11 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import type { ReactNode } from 'react';
 import { useAuth } from '../hooks/useAuth';
+=======
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import {
     LayoutDashboard,
     Users,
@@ -15,12 +20,15 @@ import {
 } from 'lucide-react';
 import { InstallPrompt } from './shared/InstallPrompt';
 
+<<<<<<< HEAD
 interface MainLayoutProps {
     children: ReactNode;
     currentView: string;
     onNavigate: (view: string) => void;
 }
 
+=======
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'clients', label: 'Clientes', icon: Users },
@@ -32,10 +40,20 @@ const menuItems = [
     { id: 'users', label: 'Usuários', icon: UserCog },
 ];
 
+<<<<<<< HEAD
 export function MainLayout({ children, currentView, onNavigate }: MainLayoutProps) {
     const { logout, user } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
+=======
+export function MainLayout() {
+    const { logout, user } = useAuth();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const currentView = location.pathname.split('/')[1] || 'dashboard';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
     const currentMenuItem = menuItems.find(item => item.id === currentView);
 
     return (
@@ -77,7 +95,11 @@ export function MainLayout({ children, currentView, onNavigate }: MainLayoutProp
                         <button
                             key={item.id}
                             onClick={() => {
+<<<<<<< HEAD
                                 onNavigate(item.id);
+=======
+                                navigate(`/${item.id}`);
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
                                 setSidebarOpen(false);
                             }}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${currentView === item.id
@@ -132,7 +154,11 @@ export function MainLayout({ children, currentView, onNavigate }: MainLayoutProp
                 {/* Content */}
                 <div className="flex-1 p-4 lg:p-6 overflow-auto">
                     <div className="max-w-7xl mx-auto">
+<<<<<<< HEAD
                         {children}
+=======
+                        <Outlet />
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
                     </div>
                 </div>
             </main>

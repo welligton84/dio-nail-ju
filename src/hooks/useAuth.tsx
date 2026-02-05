@@ -8,6 +8,10 @@ import {
 import { doc, getDoc, setDoc, collection, getDocs, limit, query } from 'firebase/firestore';
 import { auth, db, functions } from '../lib/firebase';
 import { httpsCallable } from 'firebase/functions';
+<<<<<<< HEAD
+=======
+import { toast } from 'sonner';
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
 import type { ReactNode } from 'react';
 import type { User } from '../types';
 
@@ -75,7 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         });
 
                         if (error.code === 'permission-denied') {
+<<<<<<< HEAD
                             alert('Erro de permissão no Firestore. Verifique as regras no Console.');
+=======
+                            toast.error('Erro de permissão no Firestore. Verifique as regras no Console.');
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
                         }
                     }
                 }
@@ -116,10 +124,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 ...newUser,
                 password: password || '123456' // Default if not provided
             });
+<<<<<<< HEAD
             alert('Usuário criado com sucesso no Authentication e no Banco de Dados!');
         } catch (error: any) {
             console.error('Erro ao adicionar usuário via Cloud Function:', error);
             alert(`Erro ao criar usuário: ${error.message}`);
+=======
+            toast.success('Usuário criado com sucesso no Authentication e no Banco de Dados!');
+        } catch (error: any) {
+            console.error('Erro ao adicionar usuário via Cloud Function:', error);
+            toast.error(`Erro ao criar usuário: ${error.message}`);
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         }
     };
 
@@ -127,10 +142,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!auth?.currentUser) return;
         try {
             await updatePassword(auth.currentUser, newPassword);
+<<<<<<< HEAD
             alert('Senha alterada com sucesso!');
         } catch (error) {
             console.error('Erro ao alterar senha:', error);
             alert('Erro ao alterar senha. Talvez seja necessário fazer login novamente.');
+=======
+            toast.success('Senha alterada com sucesso!');
+        } catch (error) {
+            console.error('Erro ao alterar senha:', error);
+            toast.error('Erro ao alterar senha. Talvez seja necessário fazer login novamente.');
+>>>>>>> b507692 (feat: rebrand to Juliana Miranda Concept, add Vitest, fix routing and finance filters)
         }
     };
 
