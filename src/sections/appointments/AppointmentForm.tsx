@@ -1,9 +1,11 @@
 import React from 'react';
-import type { AppointmentFormData, Client, Service, Staff } from '../../types';
+import type { Appointment, AppointmentFormData, Client, Service, Staff } from '../../types';
+import { AlertCircle } from 'lucide-react';
 
 interface AppointmentFormProps {
     formData: AppointmentFormData;
     setFormData: (data: AppointmentFormData) => void;
+    appointments: Appointment[];
     clients: Client[];
     services: Service[];
     staff: Staff[];
@@ -18,6 +20,7 @@ interface AppointmentFormProps {
 export function AppointmentForm({
     formData,
     setFormData,
+    appointments,
     clients,
     services,
     staff,
@@ -28,8 +31,28 @@ export function AppointmentForm({
     editingId,
     TIMES
 }: AppointmentFormProps) {
+    const isConflict = React.useMemo(() => {
+        if (!formData.staffId || !formData.date || !formData.time) return false;
+        return appointments.some(apt =>
+            apt.id !== editingId &&
+            apt.date === formData.date &&
+            apt.time === formData.time &&
+            apt.staffId === formData.staffId &&
+            apt.status !== 'cancelled'
+        );
+    }, [formData.date, formData.time, formData.staffId, appointments, editingId]);
+
     return (
-        <form onSubmit={onSubmit} className="p-6 space-y-4">
+        <form onSubmit={onSubmit} className="p-6 space-y-4 text-left">
+            {isConflict && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-sm font-bold text-amber-800">Horário Reocupado</p>
+                        <p className="text-xs text-amber-700">Este profissional já tem outro atendimento neste mesmo horário.</p>
+                    </div>
+                </div>
+            )}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
                 <select

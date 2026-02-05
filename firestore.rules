@@ -45,9 +45,8 @@ service cloud.firestore {
 
     // Financial records collection
     match /financialRecords/{recordId} {
-      allow read: if isSignedIn();
+      allow read, update, delete: if isAdmin();
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
     }
 
     // Staff collection

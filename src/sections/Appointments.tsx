@@ -100,6 +100,20 @@ export function Appointments() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Check for conflicts
+        const hasConflict = appointments.some(apt =>
+            apt.id !== editingId &&
+            apt.date === formData.date &&
+            apt.time === formData.time &&
+            apt.staffId === formData.staffId &&
+            apt.status !== 'cancelled'
+        );
+
+        if (hasConflict) {
+            toast.error('Este profissional já possui um agendamento para este horário.');
+            return;
+        }
+
         const selectedServices = services.filter(s => formData.serviceIds.includes(s.id));
         const totalValue = selectedServices.reduce((sum, s) => sum + s.price, 0);
         const duration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
@@ -308,6 +322,7 @@ export function Appointments() {
                 <AppointmentForm
                     formData={formData}
                     setFormData={setFormData}
+                    appointments={appointments}
                     clients={clients}
                     services={services}
                     staff={staff}
