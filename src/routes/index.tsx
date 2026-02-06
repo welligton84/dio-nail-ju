@@ -1,20 +1,34 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { MainLayout } from '../components/MainLayout';
-import { Login } from '../sections/Login';
-import { Dashboard } from '../sections/Dashboard';
-import { Clients } from '../sections/Clients';
-import { Services } from '../sections/Services';
-import { Appointments } from '../sections/Appointments';
-import { Finance } from '../sections/Finance';
-import { Reports } from '../sections/Reports';
-import { Users } from '../sections/Users';
-import { Staff } from '../sections/Staff';
+
+// Lazy load sections for better performance
+const Dashboard = lazy(() => import('../sections/Dashboard').then(m => ({ default: m.Dashboard })));
+const Clients = lazy(() => import('../sections/Clients').then(m => ({ default: m.Clients })));
+const Services = lazy(() => import('../sections/Services').then(m => ({ default: m.Services })));
+const Appointments = lazy(() => import('../sections/Appointments').then(m => ({ default: m.Appointments })));
+const Finance = lazy(() => import('../sections/Finance').then(m => ({ default: m.Finance })));
+const Reports = lazy(() => import('../sections/Reports').then(m => ({ default: m.Reports })));
+const Users = lazy(() => import('../sections/Users').then(m => ({ default: m.Users })));
+const Staff = lazy(() => import('../sections/Staff').then(m => ({ default: m.Staff })));
+const Login = lazy(() => import('../sections/Login').then(m => ({ default: m.Login })));
+
+// Loading component for Suspense
+const SectionLoader = () => (
+    <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-12 h-12 border-4 border-pink-100 border-t-pink-500 rounded-full animate-spin"></div>
+    </div>
+);
 
 export const router = createBrowserRouter([
     {
         path: '/login',
-        element: <Login />
+        element: (
+            <Suspense fallback={<SectionLoader />}>
+                <Login />
+            </Suspense>
+        )
     },
     {
         path: '/',
@@ -30,35 +44,35 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'dashboard',
-                element: <Dashboard />
+                element: <Suspense fallback={<SectionLoader />}><Dashboard /></Suspense>
             },
             {
                 path: 'clients',
-                element: <Clients />
+                element: <Suspense fallback={<SectionLoader />}><Clients /></Suspense>
             },
             {
                 path: 'services',
-                element: <Services />
+                element: <Suspense fallback={<SectionLoader />}><Services /></Suspense>
             },
             {
                 path: 'appointments',
-                element: <Appointments />
+                element: <Suspense fallback={<SectionLoader />}><Appointments /></Suspense>
             },
             {
                 path: 'finance',
-                element: <Finance />
+                element: <Suspense fallback={<SectionLoader />}><Finance /></Suspense>
             },
             {
                 path: 'reports',
-                element: <Reports />
+                element: <Suspense fallback={<SectionLoader />}><Reports /></Suspense>
             },
             {
                 path: 'users',
-                element: <Users />
+                element: <Suspense fallback={<SectionLoader />}><Users /></Suspense>
             },
             {
                 path: 'staff',
-                element: <Staff />
+                element: <Suspense fallback={<SectionLoader />}><Staff /></Suspense>
             },
             {
                 path: '*',

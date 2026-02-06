@@ -14,6 +14,7 @@ import {
 import { db } from '../lib/firebase';
 import { toast } from 'sonner';
 import { getCurrentDate, isCurrentMonth } from '../utils/date';
+import { isBirthdayToday, isBirthdayThisMonth } from '../utils/birthday';
 import { useAuth } from './AuthContext';
 import type { ReactNode } from 'react';
 import type { Client, Service, Appointment, FinancialRecord, DashboardStats, Staff } from '../types';
@@ -26,6 +27,8 @@ interface DataContextType {
     dashboardStats: DashboardStats;
     staff: Staff[];
     loading: boolean;
+    todayBirthdays: Client[];
+    monthBirthdays: Client[];
     addClient: (client: Omit<Client, 'id' | 'createdAt' | 'totalVisits'>) => Promise<void>;
     updateClient: (id: string, data: Partial<Client>) => Promise<void>;
     deleteClient: (id: string) => Promise<void>;
@@ -298,6 +301,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
         };
     }, [clients, appointments, financialRecords]);
 
+    // Calculate birthdays
+    const todayBirthdays = useMemo(() => {
+        return clients.filter(c => c.birthDate && isBirthdayToday(c.birthDate));
+    }, [clients]);
+
+    const monthBirthdays = useMemo(() => {
+        return clients.filter(c => c.birthDate && isBirthdayThisMonth(c.birthDate));
+    }, [clients]);
+
     return (
         <DataContext.Provider
             value={{
@@ -324,6 +336,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 updateStaff,
                 deleteStaff,
                 loading,
+                todayBirthdays,
+                monthBirthdays,
             }}
         >
             {children}

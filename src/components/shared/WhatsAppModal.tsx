@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Monitor, Smartphone, Copy, Check } from 'lucide-react';
+import { getBirthdayMessage } from '../../utils/birthday';
 import type { Appointment } from '../../types';
 
 interface WhatsAppModalProps {
@@ -8,24 +9,31 @@ interface WhatsAppModalProps {
     onClose: () => void;
     appointment: Appointment | null;
     clientPhone?: string;
+    clientName?: string;
+    isBirthday?: boolean;
 }
 
-type TemplateType = 'confirmation' | 'reminder' | 'delay' | 'thanks' | 'custom';
+type TemplateType = 'confirmation' | 'reminder' | 'delay' | 'thanks' | 'custom' | 'birthday';
 
-export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone }: WhatsAppModalProps) {
+export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clientName, isBirthday }: WhatsAppModalProps) {
     const [message, setMessage] = useState('');
     const [template, setTemplate] = useState<TemplateType>('custom');
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        if (appointment && clientPhone && isOpen) {
-            generateMessage('confirmation');
-        } else if (!appointment && clientPhone && isOpen) {
-            // Default to custom message if no appointment
-            setTemplate('custom');
-            setMessage(`Olá! Gostaria de falar com você sobre...`);
+        if (isOpen) {
+            if (isBirthday && clientName) {
+                const text = getBirthdayMessage(clientName);
+                setMessage(text);
+                setTemplate('birthday');
+            } else if (appointment && clientPhone) {
+                generateMessage('confirmation');
+            } else if (clientPhone) {
+                setTemplate('custom');
+                setMessage(`Olá! Gostaria de falar com você sobre...`);
+            }
         }
-    }, [appointment, clientPhone, isOpen]);
+    }, [appointment, clientPhone, clientName, isBirthday, isOpen]);
 
     const generateMessage = (type: TemplateType) => {
         // Handle generic templates without appointment
@@ -60,6 +68,9 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone }: Wha
                 case 'thanks':
                     text = `Obrigada pela visita, ${clientName}! 💖\nFoi um prazer te atender. Se puder, nos marque na foto das unhas! 📸\nAté a próxima!`;
                     break;
+                case 'birthday':
+                    text = getBirthdayMessage(clientName);
+                    break;
                 case 'custom':
                     text = message; // Keep current message
                     break;
@@ -67,6 +78,10 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone }: Wha
 
             setTemplate(type);
             if (type !== 'custom') setMessage(text);
+        } else if (clientName && type === 'birthday') {
+            const text = getBirthdayMessage(clientName);
+            setTemplate('birthday');
+            setMessage(text);
         }
     };
 

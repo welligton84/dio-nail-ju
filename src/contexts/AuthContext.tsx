@@ -46,22 +46,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             setUser({ ...userData, id: firebaseUser.uid, email: firebaseUser.email! });
                         } else {
                             // First time login, user exists in Auth but not in Firestore 'users' collection
-                            // Check if there are any other users. If not, this is the first user (Admin)
+                            // Securely determine if this is the bootstrap user (Admin)
                             const usersQuery = query(collection(db, 'users'), limit(1));
                             const usersSnapshot = await getDocs(usersQuery);
                             const isFirstUser = usersSnapshot.empty;
 
+                            // If it's the first user, they become Admin. Subsequent users default to Employee.
                             const newProfile: User = {
                                 id: firebaseUser.uid,
                                 email: firebaseUser.email!,
-                                name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
+                                name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Novo Usuário',
                                 role: isFirstUser ? 'admin' : 'employee',
                                 active: true,
                                 createdAt: new Date().toISOString()
                             };
 
+                            // Only proceed if we successfully determined the first user status
                             await setDoc(userRef, newProfile);
                             setUser(newProfile);
+
+                            if (isFirstUser) {
+                                toast.success('Bem-vindo! Você foi configurado como administrador do sistema.');
+                            }
                         }
                     } catch (error: any) {
                         console.error('Erro ao sincronizar perfil do usuário:', error);
