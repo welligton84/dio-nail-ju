@@ -35,5 +35,5 @@ export function isBirthdayThisMonth(birthDate: string): boolean {
  * @returns A friendly birthday message
  */
 export function getBirthdayMessage(clientName: string): string {
-    return `Parabéns, ${clientName}! ✨\n\nDesejamos um dia maravilhoso, repleto de alegria e muita beleza. Que seu novo ciclo seja incrível!\n\nCom carinho, Juliana Miranda Concept 💅✨`;
+    return `✨ Feliz Aniversário, ${clientName}! ✨\n\nTodo novo ano é um novo ciclo, um convite para se reconectar com seus propósitos e continuar se escolhendo. Que esta fase venha com leveza, clareza e muito autocuidado. 🤍\n\nQue este novo ano venha com mais clareza, leveza e momentos que façam sentido para a sua história. Que você continue se escolhendo, se priorizando e celebrando cada conquista, por menor que pareça.\n\nE para celebrar, durante todo o mês do seu aniversário, você ganha 10% de desconto em todos os procedimentos realizados conosco. 🎁\n\nAproveite esse presente. Você merece! 💫\n\nCom carinho, Juliana Miranda Concept 💅✨`;
 }
