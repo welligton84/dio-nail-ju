@@ -44,7 +44,7 @@ export function getLastDayOfMonth(): string {
  * @returns True if date is in current month
  */
 export function isCurrentMonth(dateString: string): boolean {
-    const date = new Date(dateString);
+    const date = parseISOToLocal(dateString);
     const now = new Date();
     return date.getFullYear() === now.getFullYear() && 
            date.getMonth() === now.getMonth();
@@ -56,8 +56,19 @@ export function isCurrentMonth(dateString: string): boolean {
  * @returns Formatted date string (DD/MM/YYYY)
  */
 export function formatDateToBR(dateString: string): string {
+    if (!dateString) return '';
     const [year, month, day] = dateString.split('-');
     return `${day}/${month}/${year}`;
+}
+
+/**
+ * Parses a YYYY-MM-DD string into a local Date object
+ * @param dateString - Date string in YYYY-MM-DD format
+ * @returns Date object in local time
+ */
+export function parseISOToLocal(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
 }
 
 /**
@@ -66,7 +77,7 @@ export function formatDateToBR(dateString: string): string {
  * @returns Formatted date string (e.g., "15 de Janeiro de 2024")
  */
 export function formatDateToReadable(dateString: string): string {
-    const date = new Date(dateString + 'T00:00:00');
+    const date = parseISOToLocal(dateString);
     return date.toLocaleDateString('pt-BR', {
         day: 'numeric',
         month: 'long',

@@ -26,13 +26,10 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(!!auth);
 
     useEffect(() => {
-        if (!auth) {
-            setIsLoading(false);
-            return;
-        }
+        if (!auth) return;
 
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
@@ -69,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 toast.success('Bem-vindo! Você foi configurado como administrador do sistema.');
                             }
                         }
-                    } catch (error: any) {
+                    } catch (error) {
                         console.error('Erro ao sincronizar perfil do usuário:', error);
                         // Fallback logic
                         setUser({
@@ -81,7 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             createdAt: new Date().toISOString()
                         });
 
-                        if (error.code === 'permission-denied') {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        if ((error as any).code === 'permission-denied') {
                             toast.error('Erro de permissão no Firestore. Verifique as regras no Console.');
                         }
                     }
@@ -100,12 +98,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await signInWithEmailAndPassword(auth, email, password);
             return { success: true };
-        } catch (error: any) {
+        } catch (error) {
             console.error('Erro ao fazer login:', error);
             let message = 'E-mail ou senha incorretos';
-            if (error.code === 'auth/user-not-found') message = 'Usuário não encontrado';
-            if (error.code === 'auth/wrong-password') message = 'Senha incorreta';
-            if (error.code === 'auth/network-request-failed') message = 'Erro de conexão com o servidor';
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const code = (error as any).code;
+            if (code === 'auth/user-not-found') message = 'Usuário não encontrado';
+            if (code === 'auth/wrong-password') message = 'Senha incorreta';
+            if (code === 'auth/network-request-failed') message = 'Erro de conexão com o servidor';
             return { success: false, error: message };
         }
     };

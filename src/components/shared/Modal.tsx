@@ -14,10 +14,10 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-            <div className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}>
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                    <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg">
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full ${maxWidth} max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200`}>
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-white dark:bg-gray-900 sticky top-0 z-10">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
                         <X className="w-6 h-6" />
                     </button>
                 </div>

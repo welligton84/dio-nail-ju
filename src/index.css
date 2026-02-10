@@ -1,56 +1,74 @@
 @import "tailwindcss";
 
-/* Custom styles for Juliana Miranda Concept */
-* {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+@theme {
+  --color-brand-pink: #f472b6;
+  --color-brand-purple: #a855f7;
+  --color-brand-hot-pink: #ec4899;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+}
+
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #1e293b;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300;
+  }
+}
+
+/* Custom styles for Juliana Miranda Concept */
 .gradient-bg {
-  background: linear-gradient(135deg, #f472b6 0%, #a855f7 100%);
+  @apply bg-linear-to-br from-brand-pink to-brand-purple;
 }
 
 .gradient-text {
-  background: linear-gradient(to right, #ec4899, #a855f7);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  @apply bg-linear-to-r from-brand-hot-pink to-brand-purple bg-clip-text text-transparent;
 }
 
 .card-hover {
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-premium;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  @apply w-2 h-2;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  @apply bg-gray-100 rounded-lg;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c4b5fd;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a78bfa;
+  @apply bg-purple-200 rounded-lg hover:bg-purple-300;
 }
 
 /* Toggle switch styles */
 .toggle-checkbox:checked {
-  right: 0;
-  border-color: #ec4899;
+  @apply right-0 border-brand-hot-pink;
 }
 
-.toggle-checkbox:checked + .toggle-label {
-  background-color: #ec4899;
+.toggle-checkbox:checked+.toggle-label {
+  @apply bg-brand-hot-pink;
 }

@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useData } from '../contexts/DataContext';
+import { formatDateToBR, getCurrentDate } from '../utils/date';
 import type { FinancialFormData, FinancialRecord, PaymentMethod } from '../types';
 import { INCOME_CATEGORIES, EXPENSE_CATEGORIES } from '../types';
 import { Plus, TrendingUp, TrendingDown, DollarSign, Trash2, Calendar } from 'lucide-react';
@@ -18,10 +19,10 @@ export function Finance() {
     const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
-    const isSelectedPeriod = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.getFullYear() === selectedYear && (date.getMonth() + 1) === selectedMonth;
-    };
+    const isSelectedPeriod = useCallback((dateString: string) => {
+        const [year, month] = dateString.split('-').map(Number);
+        return year === selectedYear && month === selectedMonth;
+    }, [selectedYear, selectedMonth]);
 
     const yearOptions = Array.from({ length: 3 }, (_, i) => now.getFullYear() - i);
     const monthOptions = [
@@ -44,7 +45,7 @@ export function Finance() {
         category: '',
         description: '',
         value: '',
-        date: new Date().toISOString().split('T')[0],
+        date: getCurrentDate(),
         paymentMethod: 'pix'
     });
 
@@ -56,7 +57,7 @@ export function Finance() {
                 return matchesTab && matchesPeriod;
             })
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [financialRecords, activeTab, selectedMonth, selectedYear]);
+    }, [financialRecords, activeTab, isSelectedPeriod]);
 
     const totals = useMemo(() => {
         const income = financialRecords
@@ -70,7 +71,7 @@ export function Finance() {
             expense,
             profit: income - expense
         };
-    }, [financialRecords, selectedMonth, selectedYear]);
+    }, [financialRecords, isSelectedPeriod]);
 
     const getPaymentMethodLabel = (method: PaymentMethod) => {
         switch (method) {
@@ -93,7 +94,7 @@ export function Finance() {
             category: '',
             description: '',
             value: '',
-            date: new Date().toISOString().split('T')[0],
+            date: getCurrentDate(),
             paymentMethod: 'pix'
         });
     };
@@ -207,7 +208,7 @@ export function Finance() {
                         {
                             header: 'Data',
                             accessor: (r: FinancialRecord) => (
-                                <span className="text-gray-500">{new Date(r.date).toLocaleDateString('pt-BR')}</span>
+                                <span className="text-gray-500">{formatDateToBR(r.date)}</span>
                             )
                         },
                         {

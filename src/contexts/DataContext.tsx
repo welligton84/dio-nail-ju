@@ -75,9 +75,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
             }
         };
 
-        const handleError = (error: any, context: string) => {
+        const handleError = (error: unknown, context: string) => {
             console.error(`Status Firestore [${context}]:`, error);
-            if (error.code === 'permission-denied') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ((error as any).code === 'permission-denied') {
                 console.warn('Verifique as regras de segurança do Firestore no Console.');
             }
             // Even if error, mark as loaded to prevent stuck spinner if rules block one collection

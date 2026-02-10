@@ -32,7 +32,7 @@ export function AppointmentForm({
     TIMES
 }: AppointmentFormProps) {
     // Check if a specific time is occupied by ANY professional
-    const getOccupiedStaffAt = (date: string, time: string) => {
+    const getOccupiedStaffAt = React.useCallback((date: string, time: string) => {
         return appointments
             .filter(apt =>
                 apt.id !== editingId &&
@@ -41,12 +41,12 @@ export function AppointmentForm({
                 apt.status !== 'cancelled'
             )
             .map(apt => apt.staffId);
-    };
+    }, [appointments, editingId]);
 
     const occupiedStaffIds = React.useMemo(() => {
         if (!formData.date || !formData.time) return [];
         return getOccupiedStaffAt(formData.date, formData.time);
-    }, [formData.date, formData.time, appointments, editingId]);
+    }, [formData.date, formData.time, getOccupiedStaffAt]);
 
     const isSpecificConflict = React.useMemo(() => {
         if (!formData.staffId) return false;
@@ -59,7 +59,7 @@ export function AppointmentForm({
         const occupiedCount = getOccupiedStaffAt(formData.date, formData.time).length;
         const activeStaffCount = staff.filter(s => s.active).length;
         return occupiedCount >= activeStaffCount && activeStaffCount > 0;
-    }, [formData.date, formData.time, appointments, staff, editingId]);
+    }, [formData.date, formData.time, staff, getOccupiedStaffAt]);
 
     return (
         <form onSubmit={onSubmit} className="p-6 space-y-4 text-left">

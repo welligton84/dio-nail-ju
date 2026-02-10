@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { Monitor, Smartphone, Copy, Check } from 'lucide-react';
 import { getBirthdayMessage } from '../../utils/birthday';
 import type { Appointment } from '../../types';
+import { formatDateToBR } from '../../utils/date';
 
 interface WhatsAppModalProps {
     isOpen: boolean;
@@ -20,6 +21,64 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
     const [template, setTemplate] = useState<TemplateType>('custom');
     const [copied, setCopied] = useState(false);
 
+    const getTemplateMessage = (type: TemplateType) => {
+        if (!appointment && type === 'custom') return '';
+        if (!appointment && type !== 'custom') return '';
+
+        if (appointment) {
+            const date = formatDateToBR(appointment.date);
+            const time = appointment.time;
+            const apptClientName = appointment.clientName;
+            const services = appointment.services.map(s => s.name).join(', ');
+
+            switch (type) {
+                case 'confirmation':
+                    return `Olá ${apptClientName}! ✨\nPassando para confirmar seu agendamento para *${date} às ${time}*.\nServiços: ${services}.\n\nPodemos confirmar? 💅`;
+                case 'reminder':
+                    return `Oie ${apptClientName}! ⏰\nLembrete do seu horário hoje às *${time}* no Juliana Miranda Concept.\nEstamos te esperando! ✨`;
+                case 'delay':
+                    return `Oi ${apptClientName}, tudo bem? 🙏\nTivemos um pequeno atraso aqui no Studio. Poderia vir 15 minutinhos mais tarde?\nDesculpe o transtorno!`;
+                case 'thanks':
+                    return `Obrigada pela visita, ${apptClientName}! 💖\nFoi um prazer te atender. Se puder, nos marque na foto das unhas! 📸\nAté a próxima!`;
+                case 'birthday':
+                    return getBirthdayMessage(apptClientName);
+                case 'custom':
+                    return message;
+                default:
+                    return '';
+            }
+        } else if (clientName && type === 'birthday') {
+            return getBirthdayMessage(clientName);
+        }
+        return '';
+    };
+
+    const generateMessage = (type: TemplateType) => {
+        const text = getTemplateMessage(type);
+
+        // Special case: Clear message for custom type if no appointment
+        if (!appointment && type === 'custom') {
+            setMessage('');
+            setTemplate('custom');
+            return;
+        }
+
+        // If no appointment, only allow 'custom' or 'birthday' (if clientName exists)
+        if (!appointment) {
+            if (type !== 'birthday' || !clientName) {
+                return;
+            }
+        }
+
+        setTemplate(type);
+
+        // For all non-custom types (including birthday), set the generated message
+        if (type !== 'custom') {
+            setMessage(text);
+        }
+    };
+
+    // Corrected useEffect
     useEffect(() => {
         if (isOpen) {
             if (isBirthday && clientName) {
@@ -27,63 +86,23 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
                 setMessage(text);
                 setTemplate('birthday');
             } else if (appointment && clientPhone) {
-                generateMessage('confirmation');
+                // Use helper to avoid dependency on 'message' state
+                // We recreate the logic for 'confirmation' specifically
+                if (appointment) { // Redundant check for TS but safe
+                    const date = formatDateToBR(appointment.date);
+                    const time = appointment.time;
+                    const cName = appointment.clientName;
+                    const services = appointment.services.map(s => s.name).join(', ');
+                    const text = `Olá ${cName}! ✨\nPassando para confirmar seu agendamento para *${date} às ${time}*.\nServiços: ${services}.\n\nPodemos confirmar? 💅`;
+                    setMessage(text);
+                    setTemplate('confirmation');
+                }
             } else if (clientPhone) {
                 setTemplate('custom');
                 setMessage(`Olá! Gostaria de falar com você sobre...`);
             }
         }
     }, [appointment, clientPhone, clientName, isBirthday, isOpen]);
-
-    const generateMessage = (type: TemplateType) => {
-        // Handle generic templates without appointment
-        if (!appointment && type === 'custom') {
-            setMessage('');
-            setTemplate('custom');
-            return;
-        }
-
-        if (!appointment && type !== 'custom') {
-            // Cannot use appointment templates without an appointment
-            return;
-        }
-
-        if (appointment) {
-            const date = new Date(appointment.date).toLocaleDateString('pt-BR');
-            const time = appointment.time;
-            const clientName = appointment.clientName;
-            const services = appointment.services.map(s => s.name).join(', ');
-
-            let text = '';
-            switch (type) {
-                case 'confirmation':
-                    text = `Olá ${clientName}! ✨\nPassando para confirmar seu agendamento para *${date} às ${time}*.\nServiços: ${services}.\n\nPodemos confirmar? 💅`;
-                    break;
-                case 'reminder':
-                    text = `Oie ${clientName}! ⏰\nLembrete do seu horário hoje às *${time}* no Juliana Miranda Concept.\nEstamos te esperando! ✨`;
-                    break;
-                case 'delay':
-                    text = `Oi ${clientName}, tudo bem? 🙏\nTivemos um pequeno atraso aqui no Studio. Poderia vir 15 minutinhos mais tarde?\nDesculpe o transtorno!`;
-                    break;
-                case 'thanks':
-                    text = `Obrigada pela visita, ${clientName}! 💖\nFoi um prazer te atender. Se puder, nos marque na foto das unhas! 📸\nAté a próxima!`;
-                    break;
-                case 'birthday':
-                    text = getBirthdayMessage(clientName);
-                    break;
-                case 'custom':
-                    text = message; // Keep current message
-                    break;
-            }
-
-            setTemplate(type);
-            if (type !== 'custom') setMessage(text);
-        } else if (clientName && type === 'birthday') {
-            const text = getBirthdayMessage(clientName);
-            setTemplate('birthday');
-            setMessage(text);
-        }
-    };
 
     const handleSend = (platform: 'web' | 'desktop') => {
         if (!clientPhone) return;

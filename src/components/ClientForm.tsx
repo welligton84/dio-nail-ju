@@ -1,6 +1,9 @@
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { ClientFormData } from '../types';
 import { formatCPF, formatCNPJ, formatPhone, formatCEP } from '../utils/format';
+import { fetchAddressByCEP } from '../utils/viacep';
+import { toast } from 'sonner';
 
 interface ClientFormProps {
     formData: ClientFormData;
@@ -17,6 +20,38 @@ export function ClientForm({
     onCancel,
     editingClient,
 }: ClientFormProps) {
+    const [isLoadingCEP, setIsLoadingCEP] = useState(false);
+
+    useEffect(() => {
+        const cleanCEP = formData.zipCode?.replace(/\D/g, '') || '';
+
+        if (cleanCEP.length === 8) {
+            const lookupCEP = async () => {
+                setIsLoadingCEP(true);
+                try {
+                    const data = await fetchAddressByCEP(cleanCEP);
+                    if (data) {
+                        setFormData({
+                            ...formData,
+                            address: data.logradouro,
+                            neighborhood: data.bairro,
+                            city: data.localidade,
+                            state: data.uf
+                        });
+                        toast.success('Endereço preenchido automaticamente.');
+                    } else {
+                        toast.error('CEP não encontrado.');
+                    }
+                } catch {
+                    toast.error('Erro ao buscar o CEP.');
+                } finally {
+                    setIsLoadingCEP(false);
+                }
+            };
+            lookupCEP();
+        }
+    }, [formData.zipCode]);
+
     const estados = [
         'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
         'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
@@ -125,15 +160,22 @@ export function ClientForm({
                     <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Endereço (para NFS-e)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
+                            <div className="relative">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-                                <input
-                                    type="text"
-                                    placeholder="00000-000"
-                                    value={formData.zipCode || ''}
-                                    onChange={(e) => setFormData({ ...formData, zipCode: formatCEP(e.target.value) })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="00000-000"
+                                        value={formData.zipCode || ''}
+                                        onChange={(e) => setFormData({ ...formData, zipCode: formatCEP(e.target.value) })}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                                    />
+                                    {isLoadingCEP && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <Loader2 className="w-5 h-5 text-pink-500 animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="md:col-span-2">

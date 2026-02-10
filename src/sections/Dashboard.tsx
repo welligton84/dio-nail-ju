@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useTheme } from '../contexts/ThemeContext';
 import {
     Users,
     Calendar,
@@ -9,7 +10,9 @@ import {
     MessageSquare,
     Gift,
     Cake,
-    MessageCircle
+    MessageCircle,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { StatCardSkeleton } from '../components/shared/Skeleton';
@@ -19,8 +22,37 @@ import { isBirthdayToday } from '../utils/birthday';
 import type { Appointment } from '../types';
 
 export function Dashboard() {
-    const { clients, dashboardStats, getTodayAppointments, loading, services, todayBirthdays, monthBirthdays } = useData();
+    const { clients, dashboardStats, getTodayAppointments, loading, services, todayBirthdays, monthBirthdays, financialRecords, deleteFinancialRecord } = useData();
+    const { theme, toggleTheme } = useTheme();
     const todayAppointments = getTodayAppointments();
+
+    // TEMPORARY: Cleanup duplicate records for Yasmin Cecilia Dos Santos (2026-02-09)
+    useEffect(() => {
+        if (loading || financialRecords.length === 0) return;
+
+        const TARGET_NAME = "Yasmin Cecilia Dos Santos";
+        const TARGET_DATE = "2026-02-09";
+
+        const yasminRecords = financialRecords.filter(r =>
+            r.description.includes(TARGET_NAME) &&
+            r.date === TARGET_DATE &&
+            r.type === 'income'
+        );
+
+        if (yasminRecords.length > 1) {
+            console.log(`[CLEANUP] Found ${yasminRecords.length} records for Yasmin. Removing duplicates...`);
+            // Keep the first one, delete others
+            const duplicates = yasminRecords.slice(1);
+            duplicates.forEach(async (record) => {
+                try {
+                    await deleteFinancialRecord(record.id);
+                    console.log(`[CLEANUP] Deleted duplicate record: ${record.id}`);
+                } catch (err) {
+                    console.error(`[CLEANUP] Error deleting record ${record.id}:`, err);
+                }
+            });
+        }
+    }, [loading, financialRecords, deleteFinancialRecord]);
 
     const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
     const [whatsAppAppointment, setWhatsAppAppointment] = useState<Appointment | null>(null);
@@ -51,9 +83,16 @@ export function Dashboard() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Olá, Juliana!</h1>
-                    <p className="text-gray-500 mt-1">Veja o que está acontecendo hoje no studio.</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Olá, Juliana!</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">Veja o que está acontecendo hoje no studio.</p>
                 </div>
+                <button
+                    onClick={toggleTheme}
+                    className="p-3 rounded-xl bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all border border-gray-200 dark:border-gray-800 shadow-sm"
+                    title="Alternar tema"
+                >
+                    {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                </button>
             </div>
 
             {/* Metrics Grid */}
@@ -98,46 +137,46 @@ export function Dashboard() {
             {/* Today's Appointments */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <Clock className="w-5 h-5 text-pink-500" />
                                 Próximos Atendimentos
                             </h2>
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Hoje</span>
+                            <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Hoje</span>
                         </div>
-                        <div className="divide-y divide-gray-50">
+                        <div className="divide-y divide-gray-50 dark:divide-gray-800">
                             {todayAppointments.length === 0 ? (
                                 <div className="p-12 text-center">
-                                    <Calendar className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                                    <p className="text-gray-500 font-medium">Nenhum agendamento para hoje.</p>
+                                    <Calendar className="w-12 h-12 text-gray-200 dark:text-gray-800 mx-auto mb-3" />
+                                    <p className="text-gray-500 dark:text-gray-400 font-medium">Nenhum agendamento para hoje.</p>
                                 </div>
                             ) : (
                                 todayAppointments.map((apt) => (
-                                    <div key={apt.id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                                    <div key={apt.id} className="p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                             <div className="flex items-start gap-4">
-                                                <div className="bg-pink-50 text-pink-600 px-3 py-2 rounded-xl text-center min-w-[70px]">
+                                                <div className="bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 px-3 py-2 rounded-xl text-center min-w-[70px]">
                                                     <span className="block text-sm font-bold uppercase">{apt.time}</span>
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-gray-900">{apt.clientName}</h3>
-                                                    <p className="text-sm text-gray-500">
+                                                    <h3 className="font-bold text-gray-900 dark:text-white">{apt.clientName}</h3>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                                         {apt.services.map(s => s.name).join(', ')}
                                                     </p>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs font-medium text-gray-400">Profissional:</span>
+                                                        <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Profissional:</span>
                                                         <span className="text-xs font-bold text-pink-400 uppercase tracking-tighter">{apt.staffName}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-                                                <span className="text-lg font-bold text-green-600 sm:mr-4">
+                                            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-800">
+                                                <span className="text-lg font-bold text-green-600 dark:text-green-400 sm:mr-4">
                                                     {formatCurrency(apt.totalValue)}
                                                 </span>
                                                 <button
                                                     onClick={() => handleWhatsApp(apt)}
-                                                    className="flex items-center gap-2 px-4 py-2 text-green-600 hover:bg-green-50 rounded-xl transition-colors font-semibold border border-green-100"
+                                                    className="flex items-center gap-2 px-4 py-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-colors font-semibold border border-green-100 dark:border-green-800"
                                                 >
                                                     <MessageSquare className="w-4 h-4" />
                                                     <span className="text-sm sm:inline">WhatsApp</span>
@@ -156,23 +195,23 @@ export function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                 {/* Today's Birthdays */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-full">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                             <Cake className="w-5 h-5 text-pink-500" />
                             Aniversariantes do Dia
                         </h2>
                         {todayBirthdays.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-8 text-center">
-                                <Gift className="w-10 h-10 text-gray-200 mb-2" />
-                                <p className="text-sm text-gray-400 font-medium">Ninguém faz aniversário hoje.</p>
+                                <Gift className="w-10 h-10 text-gray-200 dark:text-gray-800 mb-2" />
+                                <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Ninguém faz aniversário hoje.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {todayBirthdays.map((client) => (
-                                    <div key={client.id} className="flex items-center justify-between p-3 bg-pink-50 rounded-xl">
+                                    <div key={client.id} className="flex items-center justify-between p-3 bg-pink-50 dark:bg-pink-900/10 rounded-xl">
                                         <div>
-                                            <p className="font-bold text-gray-900 text-sm">{client.name}</p>
-                                            <p className="text-xs text-pink-600 font-medium tracking-tighter uppercase">Parabéns! 🎉</p>
+                                            <p className="font-bold text-gray-900 dark:text-white text-sm">{client.name}</p>
+                                            <p className="text-xs text-pink-600 dark:text-pink-400 font-medium tracking-tighter uppercase">Parabéns! 🎉</p>
                                         </div>
                                         <button
                                             onClick={() => handleBirthdayWhatsApp(client.name, client.phone)}
@@ -187,13 +226,13 @@ export function Dashboard() {
                         )}
 
                         {monthBirthdays.length > 0 && (
-                            <div className="mt-6 pt-6 border-t border-gray-50">
-                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">No mês</h3>
+                            <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-800">
+                                <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">No mês</h3>
                                 <div className="space-y-3 max-h-[150px] overflow-y-auto pr-1">
                                     {monthBirthdays.filter(c => !isBirthdayToday(c.birthDate!)).map(client => (
                                         <div key={client.id} className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-600 font-medium">{client.name}</span>
-                                            <span className="text-xs font-bold text-gray-400">
+                                            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{client.name}</span>
+                                            <span className="text-xs font-bold text-gray-400 dark:text-gray-500">
                                                 {client.birthDate?.split('-')[2]}/{client.birthDate?.split('-')[1]}
                                             </span>
                                         </div>
@@ -206,21 +245,21 @@ export function Dashboard() {
 
                 {/* Popular Services Mini List */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full">
+                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-full">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-green-500" />
                                 Serviços Ativos
                             </h2>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {services.filter(s => s.active).slice(0, 6).map((service) => (
-                                <div key={service.id} className="flex items-center justify-between p-3 border border-gray-50 rounded-xl hover:bg-gray-50 transition-colors">
+                                <div key={service.id} className="flex items-center justify-between p-3 border border-gray-50 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: service.color }} />
-                                        <span className="text-sm font-medium text-gray-700">{service.name}</span>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{service.name}</span>
                                     </div>
-                                    <span className="text-sm font-bold text-gray-900">{formatCurrency(service.price)}</span>
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(service.price)}</span>
                                 </div>
                             ))}
                         </div>

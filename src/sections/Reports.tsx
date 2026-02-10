@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useData } from '../contexts/DataContext';
 import { BarChart3, Users, Calendar, DollarSign, TrendingUp, PieChart, RefreshCw } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
@@ -15,10 +15,10 @@ export function Reports() {
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
     // Helper function to check if a date matches selected month/year
-    const isSelectedMonth = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.getFullYear() === selectedYear && (date.getMonth() + 1) === selectedMonth;
-    };
+    const isSelectedMonth = useCallback((dateString: string) => {
+        const [year, month] = dateString.split('-').map(Number);
+        return year === selectedYear && month === selectedMonth;
+    }, [selectedYear, selectedMonth]);
 
     // Generate year options (current year and previous 2 years)
     const yearOptions = Array.from({ length: 3 }, (_, i) => now.getFullYear() - i);
@@ -43,7 +43,7 @@ export function Reports() {
             return acc + (isSelectedMonth(apt.date) ? apt.services.filter(s => s.id === service.id).length : 0);
         }, 0);
         return { ...service, count };
-    }).sort((a: any, b: any) => b.count - a.count), [services, appointments, selectedMonth, selectedYear]);
+    }).sort((a: { count: number }, b: { count: number }) => b.count - a.count), [services, appointments, isSelectedMonth]);
 
     // Calculate client frequency
     const topClients = useMemo(() => [...clients]
@@ -56,7 +56,7 @@ export function Reports() {
         .reduce((acc: Record<string, number>, r: FinancialRecord) => {
             acc[r.category] = (acc[r.category] || 0) + r.value;
             return acc;
-        }, {}), [financialRecords, selectedMonth, selectedYear]);
+        }, {}), [financialRecords, isSelectedMonth]);
 
     // Expenses by category (filtered by selected month)
     const expensesByCategory = useMemo(() => financialRecords
@@ -64,7 +64,7 @@ export function Reports() {
         .reduce((acc: Record<string, number>, r: FinancialRecord) => {
             acc[r.category] = (acc[r.category] || 0) + r.value;
             return acc;
-        }, {}), [financialRecords, selectedMonth, selectedYear]);
+        }, {}), [financialRecords, isSelectedMonth]);
 
     // Calculate commissions by staff (filtered by selected month)
     const staffCommissions = useMemo(() => staff.map((member: Staff) => {
@@ -81,7 +81,7 @@ export function Reports() {
             commissionAmount,
             count: completedApts.length
         };
-    }).sort((a, b) => b.totalSales - a.totalSales), [staff, appointments, selectedMonth, selectedYear]);
+    }).sort((a: { totalSales: number }, b: { totalSales: number }) => b.totalSales - a.totalSales), [staff, appointments, isSelectedMonth]);
 
     const commissionFooter = (
         <tr className="bg-gray-50 font-bold text-gray-900 border-t border-gray-100">
