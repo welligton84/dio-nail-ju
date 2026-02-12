@@ -109,8 +109,8 @@ export function Finance() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Financeiro</h1>
-                    <p className="text-gray-500 mt-1">Controle suas entradas e saídas</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Financeiro</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">Controle suas entradas e saídas</p>
                 </div>
                 <button
                     onClick={() => setShowForm(true)}
@@ -144,17 +144,17 @@ export function Finance() {
             </div>
 
             {/* Period Selector */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700">Período:</span>
+                        <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Período:</span>
                     </div>
                     <div className="flex gap-3 flex-1">
                         <select
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                            className="flex-1 sm:flex-none px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm bg-white"
+                            className="flex-1 sm:flex-none px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm bg-white dark:bg-gray-800 dark:text-white"
                         >
                             {monthOptions.map(month => (
                                 <option key={month.value} value={month.value}>{month.label}</option>
@@ -163,7 +163,7 @@ export function Finance() {
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm bg-white"
+                            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm bg-white dark:bg-gray-800 dark:text-white"
                         >
                             {yearOptions.map(year => (
                                 <option key={year} value={year}>{year}</option>
@@ -174,26 +174,26 @@ export function Finance() {
             </div>
 
             {/* Filters and List */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex bg-gray-50 p-1 rounded-xl w-full sm:w-auto">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex bg-gray-50 dark:bg-gray-800 p-1 rounded-xl w-full sm:w-auto">
                         <button
                             onClick={() => setActiveTab('all')}
-                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                 }`}
                         >
                             Todos
                         </button>
                         <button
                             onClick={() => setActiveTab('income')}
-                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'income' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'income' ? 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                 }`}
                         >
                             Receitas
                         </button>
                         <button
                             onClick={() => setActiveTab('expense')}
-                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                            className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'expense' ? 'bg-white dark:bg-gray-700 text-red-600 dark:text-red-400 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                 }`}
                         >
                             Despesas
@@ -208,22 +208,22 @@ export function Finance() {
                         {
                             header: 'Data',
                             accessor: (r: FinancialRecord) => (
-                                <span className="text-gray-500">{formatDateToBR(r.date)}</span>
+                                <span className="text-gray-500 dark:text-gray-400">{formatDateToBR(r.date)}</span>
                             )
                         },
                         {
                             header: 'Descrição',
                             accessor: (r: FinancialRecord) => (
                                 <div className="max-w-[150px] sm:max-w-none">
-                                    <p className="font-bold text-gray-900 truncate">{r.description}</p>
-                                    <p className="text-xs text-gray-400 uppercase tracking-tighter">{r.category}</p>
+                                    <p className="font-bold text-gray-900 dark:text-white truncate">{r.description}</p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-tighter">{r.category}</p>
                                 </div>
                             )
                         },
                         {
                             header: 'Método',
                             accessor: (r: FinancialRecord) => (
-                                <span className="text-xs font-medium text-gray-500 uppercase">
+                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                     {getPaymentMethodLabel(r.paymentMethod || 'pix')}
                                 </span>
                             )
@@ -231,7 +231,7 @@ export function Finance() {
                         {
                             header: 'Tipo',
                             accessor: (r: FinancialRecord) => (
-                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${r.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${r.type === 'income' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                     }`}>
                                     {r.type === 'income' ? 'Receita' : 'Despesa'}
                                 </span>
@@ -240,7 +240,7 @@ export function Finance() {
                         {
                             header: 'Valor',
                             accessor: (r: FinancialRecord) => (
-                                <span className={`font-bold ${r.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                                <span className={`font-bold ${r.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                     {r.type === 'income' ? '+' : '-'} {formatCurrency(r.value)}
                                 </span>
                             )
@@ -250,7 +250,7 @@ export function Finance() {
                             accessor: (r: FinancialRecord) => (
                                 <button
                                     onClick={() => handleDelete(r.id)}
-                                    className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                                    className="p-2 text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 transition-colors"
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
@@ -269,12 +269,12 @@ export function Finance() {
             >
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
-                        <div className="flex bg-gray-100 p-1 rounded-xl">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo *</label>
+                        <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-xl">
                             <button
                                 type="button"
                                 onClick={() => setFormData({ ...formData, type: 'income', category: '' })}
-                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'income' ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500'
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'income' ? 'bg-white dark:bg-gray-600 text-green-600 dark:text-green-400 shadow-sm' : 'text-gray-500 dark:text-gray-400'
                                     }`}
                             >
                                 Receita
@@ -282,7 +282,7 @@ export function Finance() {
                             <button
                                 type="button"
                                 onClick={() => setFormData({ ...formData, type: 'expense', category: '' })}
-                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500'
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'expense' ? 'bg-white dark:bg-gray-600 text-red-600 dark:text-red-400 shadow-sm' : 'text-gray-500 dark:text-gray-400'
                                     }`}
                             >
                                 Despesa
@@ -291,11 +291,11 @@ export function Finance() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria *</label>
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
                             required
                         >
                             <option value="">Selecione uma categoria</option>
@@ -306,12 +306,12 @@ export function Finance() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Descrição *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição *</label>
                         <input
                             type="text"
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
                             placeholder="Descreva o registro"
                             required
                         />
@@ -319,35 +319,35 @@ export function Finance() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Valor *</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor *</label>
                             <input
                                 type="number"
                                 step="0.01"
                                 value={formData.value}
                                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
                                 placeholder="0,00"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data *</label>
                             <input
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
                                 required
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Forma de Pagamento</label>
                         <select
                             value={formData.paymentMethod}
                             onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as PaymentMethod })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none"
+                            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none dark:bg-gray-700 dark:text-white"
                             required
                         >
                             <option value="pix">PIX</option>
@@ -366,7 +366,7 @@ export function Finance() {
                         <button
                             type="button"
                             onClick={() => setShowForm(false)}
-                            className="px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-600 font-medium"
+                            className="px-6 py-3 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-gray-600 dark:text-gray-300 font-medium"
                         >
                             Cancelar
                         </button>

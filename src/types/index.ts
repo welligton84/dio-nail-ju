@@ -55,6 +55,7 @@ export interface Service {
     category: ServiceCategory;
     active: boolean;
     color: string;
+    commissionRate?: number;
 }
 
 export type ServiceCategory =
@@ -146,6 +147,7 @@ export interface ServiceFormData {
     category: ServiceCategory;
     color: string;
     active: boolean;
+    commissionRate?: number;
 }
 
 export interface AppointmentFormData {

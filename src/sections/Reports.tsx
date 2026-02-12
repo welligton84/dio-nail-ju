@@ -84,13 +84,13 @@ export function Reports() {
     }).sort((a: { totalSales: number }, b: { totalSales: number }) => b.totalSales - a.totalSales), [staff, appointments, isSelectedMonth]);
 
     const commissionFooter = (
-        <tr className="bg-gray-50 font-bold text-gray-900 border-t border-gray-100">
+        <tr className="bg-gray-50 dark:bg-gray-800 font-bold text-gray-900 dark:text-white border-t border-gray-100 dark:border-gray-700">
             <td colSpan={3} className="px-6 py-4">Total Geral</td>
             <td className="px-6 py-4">
                 {formatCurrency(staffCommissions.reduce((sum: number, s) => sum + s.totalSales, 0))}
             </td>
             <td className="px-6 py-4"></td>
-            <td className="px-6 py-4 text-pink-600">
+            <td className="px-6 py-4 text-pink-600 dark:text-pink-400">
                 {formatCurrency(staffCommissions.reduce((sum: number, s) => sum + s.commissionAmount, 0))}
             </td>
         </tr>
@@ -100,13 +100,13 @@ export function Reports() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Relatórios e Métricas</h1>
-                    <p className="text-gray-500 mt-1">Visão geral do desempenho do seu negócio</p>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Relatórios e Métricas</h1>
+                    <p className="text-gray-500 dark:text-gray-400 mt-1">Visão geral do desempenho do seu negócio</p>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={() => syncVisitCounts()}
-                        className="flex items-center gap-2 px-4 py-2 bg-pink-100 text-pink-600 rounded-xl hover:bg-pink-200 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded-xl hover:bg-pink-200 dark:hover:bg-pink-900/50 transition-colors"
                     >
                         <RefreshCw className="w-4 h-4" />
                         <span className="text-sm font-semibold">Sincronizar Visitas</span>
@@ -115,17 +115,17 @@ export function Reports() {
             </div>
 
             {/* Month/Year Selector */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700">Período:</span>
+                        <Calendar className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Período:</span>
                     </div>
                     <div className="flex gap-3 flex-1">
                         <select
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                            className="flex-1 sm:flex-none px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm"
+                            className="flex-1 sm:flex-none px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm bg-white dark:bg-gray-800 dark:text-white"
                         >
                             {monthOptions.map(month => (
                                 <option key={month.value} value={month.value}>{month.label}</option>
@@ -134,7 +134,7 @@ export function Reports() {
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(Number(e.target.value))}
-                            className="px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm"
+                            className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none text-sm bg-white dark:bg-gray-800 dark:text-white"
                         >
                             {yearOptions.map(year => (
                                 <option key={year} value={year}>{year}</option>
@@ -174,24 +174,24 @@ export function Reports() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Popular Services */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
                         <BarChart3 className="w-5 h-5 text-pink-500" />
                         Serviços Mais Populares
                     </h2>
                     {serviceStats.length === 0 ? (
-                        <p className="text-gray-500 text-center py-8">Nenhum dado disponível</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-8">Nenhum dado disponível</p>
                     ) : (
                         <div className="space-y-4">
                             {serviceStats.slice(0, 5).map((service, index) => (
                                 <div key={service.id} className="flex items-center gap-4">
-                                    <span className="text-lg font-bold text-gray-400 w-6">#{index + 1}</span>
+                                    <span className="text-lg font-bold text-gray-400 dark:text-gray-600 w-6">#{index + 1}</span>
                                     <div className="flex-1">
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="font-medium text-gray-900">{service.name}</span>
-                                            <span className="text-sm text-gray-500">{service.count} agendamentos</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{service.name}</span>
+                                            <span className="text-sm text-gray-500 dark:text-gray-400">{service.count} agendamentos</span>
                                         </div>
-                                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                        <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                                             <div
                                                 className="h-full rounded-full transition-all"
                                                 style={{
@@ -208,26 +208,26 @@ export function Reports() {
                 </div>
 
                 {/* Top Clients */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
                         <Users className="w-5 h-5 text-blue-500" />
                         Clientes Mais Frequentes
                     </h2>
                     {topClients.length === 0 ? (
-                        <p className="text-gray-500 text-center py-8">Nenhum dado disponível</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-8">Nenhum dado disponível</p>
                     ) : (
                         <div className="space-y-3">
                             {topClients.map((client, index) => (
-                                <div key={client.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-600' : 'bg-gray-300'
+                                <div key={client.id} className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-600' : 'bg-gray-300 dark:bg-gray-600'
                                         }`}>
                                         {index + 1}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="font-medium text-gray-900">{client.name}</p>
-                                        <p className="text-sm text-gray-500">{client.phone}</p>
+                                        <p className="font-medium text-gray-900 dark:text-white">{client.name}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{client.phone}</p>
                                     </div>
-                                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                    <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium">
                                         {client.totalVisits} visitas
                                     </span>
                                 </div>
@@ -237,19 +237,19 @@ export function Reports() {
                 </div>
 
                 {/* Revenue by Category */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
                         <PieChart className="w-5 h-5 text-green-500" />
                         Receitas por Categoria
                     </h2>
                     {Object.keys(revenueByCategory).length === 0 ? (
-                        <p className="text-gray-500 text-center py-8">Nenhum dado disponível</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-8">Nenhum dado disponível</p>
                     ) : (
                         <div className="space-y-3">
                             {Object.entries(revenueByCategory).map(([category, value]) => (
-                                <div key={category} className="flex items-center justify-between p-3 bg-green-50 rounded-xl font-medium">
-                                    <span className="text-gray-900">{category}</span>
-                                    <span className="text-green-600 font-bold">{formatCurrency(value)}</span>
+                                <div key={category} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-xl font-medium">
+                                    <span className="text-gray-900 dark:text-white">{category}</span>
+                                    <span className="text-green-600 dark:text-green-400 font-bold">{formatCurrency(value)}</span>
                                 </div>
                             ))}
                         </div>
@@ -257,19 +257,19 @@ export function Reports() {
                 </div>
 
                 {/* Expenses by Category */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
                         <PieChart className="w-5 h-5 text-red-500" />
                         Despesas por Categoria
                     </h2>
                     {Object.keys(expensesByCategory).length === 0 ? (
-                        <p className="text-gray-500 text-center py-8">Nenhum dado disponível</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-8">Nenhum dado disponível</p>
                     ) : (
                         <div className="space-y-3">
                             {Object.entries(expensesByCategory).map(([category, value]) => (
-                                <div key={category} className="flex items-center justify-between p-3 bg-red-50 rounded-xl font-medium">
-                                    <span className="text-gray-900">{category}</span>
-                                    <span className="text-red-600 font-bold">{formatCurrency(value)}</span>
+                                <div key={category} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-xl font-medium">
+                                    <span className="text-gray-900 dark:text-white">{category}</span>
+                                    <span className="text-red-600 dark:text-red-400 font-bold">{formatCurrency(value)}</span>
                                 </div>
                             ))}
                         </div>
@@ -279,7 +279,7 @@ export function Reports() {
 
             {/* Staff Commissions */}
             <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-yellow-500" />
                     Comissões por Profissional
                 </h2>
@@ -288,12 +288,12 @@ export function Reports() {
                     emptyMessage="Nenhum dado disponível. Complete agendamentos para ver o desempenho."
                     footer={commissionFooter}
                     columns={[
-                        { header: 'Profissional', accessor: (m: any) => <span className="font-bold text-gray-900">{m.name}</span> },
-                        { header: 'Cargo', accessor: (m: any) => <span>{m.role}</span> },
-                        { header: 'Serviços', accessor: (m: any) => <span>{m.count} concluídos</span> },
-                        { header: 'Venda Total', accessor: (m: any) => <span className="font-medium">{formatCurrency(m.totalSales)}</span> },
-                        { header: 'Comissão (%)', accessor: (m: any) => <span>{m.commission}%</span> },
-                        { header: 'A Pagar', accessor: (m: any) => <span className="font-bold text-pink-600">{formatCurrency(m.commissionAmount)}</span>, className: 'text-right' },
+                        { header: 'Profissional', accessor: (m: any) => <span className="font-bold text-gray-900 dark:text-white">{m.name}</span> },
+                        { header: 'Cargo', accessor: (m: any) => <span className="text-gray-700 dark:text-gray-300">{m.role}</span> },
+                        { header: 'Serviços', accessor: (m: any) => <span className="text-gray-700 dark:text-gray-300">{m.count} concluídos</span> },
+                        { header: 'Venda Total', accessor: (m: any) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(m.totalSales)}</span> },
+                        { header: 'Comissão (%)', accessor: (m: any) => <span className="text-gray-700 dark:text-gray-300">{m.commission}%</span> },
+                        { header: 'A Pagar', accessor: (m: any) => <span className="font-bold text-pink-600 dark:text-pink-400">{formatCurrency(m.commissionAmount)}</span>, className: 'text-right' },
                     ]}
                 />
             </div>

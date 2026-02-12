@@ -46,8 +46,8 @@ export function getLastDayOfMonth(): string {
 export function isCurrentMonth(dateString: string): boolean {
     const date = parseISOToLocal(dateString);
     const now = new Date();
-    return date.getFullYear() === now.getFullYear() && 
-           date.getMonth() === now.getMonth();
+    return date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth();
 }
 
 /**
@@ -83,4 +83,19 @@ export function formatDateToReadable(dateString: string): string {
         month: 'long',
         year: 'numeric'
     });
+}
+
+/**
+ * Formats duration in minutes to readable string
+ * @param minutes - Duration in minutes
+ * @returns Formatted string (e.g. "1h 30min" or "45min")
+ */
+export function formatDuration(minutes: number): string {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+
+    if (hours > 0) {
+        return `${hours}h${mins > 0 ? ` ${mins}min` : ''}`;
+    }
+    return `${mins}min`;
 }

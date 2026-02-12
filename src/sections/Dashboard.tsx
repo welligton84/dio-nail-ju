@@ -7,7 +7,6 @@ import {
     TrendingUp,
     DollarSign,
     Clock,
-    MessageSquare,
     Gift,
     Cake,
     MessageCircle,
@@ -19,12 +18,59 @@ import { StatCardSkeleton } from '../components/shared/Skeleton';
 import { formatCurrency } from '../utils/currency';
 import { WhatsAppModal } from '../components/shared/WhatsAppModal';
 import { isBirthdayToday } from '../utils/birthday';
-import type { Appointment } from '../types';
+import { useAppointmentManagement } from '../hooks/useAppointmentManagement';
+import { AppointmentCard } from './appointments/AppointmentCard';
+import { Modal } from '../components/shared/Modal';
+import { AppointmentForm } from './appointments/AppointmentForm';
+import { PaymentForm } from './appointments/PaymentForm';
+
+const TIMES = [
+    '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
+    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
+    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+    '18:00', '18:30', '19:00', '19:30', '20:00', '20:30'
+];
 
 export function Dashboard() {
-    const { clients, dashboardStats, getTodayAppointments, loading, services, todayBirthdays, monthBirthdays, financialRecords, deleteFinancialRecord } = useData();
+    const { dashboardStats, loading, todayBirthdays, monthBirthdays, services: allServices, financialRecords, deleteFinancialRecord } = useData();
     const { theme, toggleTheme } = useTheme();
-    const todayAppointments = getTodayAppointments();
+
+    const {
+        appointments: allAppointments,
+        dailyAppointments,
+        // modal states
+        showForm,
+        setShowForm,
+        editingId,
+        showPaymentModal,
+        setShowPaymentModal,
+        isSubmittingPayment,
+        paymentValue,
+        setPaymentValue,
+        paymentMethod,
+        setPaymentMethod,
+        showWhatsAppModal,
+        setShowWhatsAppModal,
+        whatsAppAppointment,
+        whatsAppPhone,
+        // form data
+        formData,
+        setFormData,
+        // lookups
+        services,
+        clients,
+        staff,
+        // actions
+        resetForm,
+        handleEdit,
+        handleSubmit,
+        handleStatusChange,
+        handlePay,
+        handleWhatsApp,
+        confirmPayment,
+        handleDelete,
+        handleServiceToggle
+    } = useAppointmentManagement();
 
     // TEMPORARY: Cleanup duplicate records for Yasmin Cecilia Dos Santos (2026-02-09)
     useEffect(() => {
@@ -54,30 +100,8 @@ export function Dashboard() {
         }
     }, [loading, financialRecords, deleteFinancialRecord]);
 
-    const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-    const [whatsAppAppointment, setWhatsAppAppointment] = useState<Appointment | null>(null);
-    const [whatsAppPhone, setWhatsAppPhone] = useState<string>('');
-    const [whatsAppName, setWhatsAppName] = useState<string>('');
-    const [isBirthdayMode, setIsBirthdayMode] = useState(false);
-
-    const handleWhatsApp = (apt: Appointment) => {
-        const client = clients.find(c => c.id === apt.clientId);
-        if (client && client.phone) {
-            setWhatsAppAppointment(apt);
-            setWhatsAppPhone(client.phone);
-            setWhatsAppName(client.name);
-            setIsBirthdayMode(false);
-            setShowWhatsAppModal(true);
-        }
-    };
-
-    const handleBirthdayWhatsApp = (name: string, phone: string) => {
-        setWhatsAppAppointment(null);
-        setWhatsAppPhone(phone);
-        setWhatsAppName(name);
-        setIsBirthdayMode(true);
-        setShowWhatsAppModal(true);
-    };
+    // Local state for birthday WhatsApp
+    const [birthdayWA, setBirthdayWA] = useState<{ name: string, phone: string } | null>(null);
 
     return (
         <div className="space-y-6">
@@ -136,7 +160,7 @@ export function Dashboard() {
 
             {/* Today's Appointments */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-3">
                     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
                         <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -145,46 +169,32 @@ export function Dashboard() {
                             </h2>
                             <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Hoje</span>
                         </div>
-                        <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                            {todayAppointments.length === 0 ? (
-                                <div className="p-12 text-center">
-                                    <Calendar className="w-12 h-12 text-gray-200 dark:text-gray-800 mx-auto mb-3" />
+                        <div className="p-6">
+                            {dailyAppointments.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <Calendar className="w-16 h-16 text-gray-100 dark:text-gray-800 mx-auto mb-4" />
                                     <p className="text-gray-500 dark:text-gray-400 font-medium">Nenhum agendamento para hoje.</p>
+                                    <button
+                                        onClick={() => setShowForm(true)}
+                                        className="mt-4 text-pink-500 font-bold hover:underline"
+                                    >
+                                        Agendar agora
+                                    </button>
                                 </div>
                             ) : (
-                                todayAppointments.map((apt) => (
-                                    <div key={apt.id} className="p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                            <div className="flex items-start gap-4">
-                                                <div className="bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400 px-3 py-2 rounded-xl text-center min-w-[70px]">
-                                                    <span className="block text-sm font-bold uppercase">{apt.time}</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-gray-900 dark:text-white">{apt.clientName}</h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {apt.services.map(s => s.name).join(', ')}
-                                                    </p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Profissional:</span>
-                                                        <span className="text-xs font-bold text-pink-400 uppercase tracking-tighter">{apt.staffName}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100 dark:border-gray-800">
-                                                <span className="text-lg font-bold text-green-600 dark:text-green-400 sm:mr-4">
-                                                    {formatCurrency(apt.totalValue)}
-                                                </span>
-                                                <button
-                                                    onClick={() => handleWhatsApp(apt)}
-                                                    className="flex items-center gap-2 px-4 py-2 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl transition-colors font-semibold border border-green-100 dark:border-green-800"
-                                                >
-                                                    <MessageSquare className="w-4 h-4" />
-                                                    <span className="text-sm sm:inline">WhatsApp</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {dailyAppointments.map((apt) => (
+                                        <AppointmentCard
+                                            key={apt.id}
+                                            appointment={apt}
+                                            onStatusChange={handleStatusChange}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                            onPay={handlePay}
+                                            onWhatsApp={() => handleWhatsApp(apt)}
+                                        />
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -214,7 +224,7 @@ export function Dashboard() {
                                             <p className="text-xs text-pink-600 dark:text-pink-400 font-medium tracking-tighter uppercase">Parabéns! 🎉</p>
                                         </div>
                                         <button
-                                            onClick={() => handleBirthdayWhatsApp(client.name, client.phone)}
+                                            onClick={() => setBirthdayWA({ name: client.name, phone: client.phone })}
                                             className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-sm"
                                             title="Enviar Parabéns"
                                         >
@@ -253,7 +263,7 @@ export function Dashboard() {
                             </h2>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {services.filter(s => s.active).slice(0, 6).map((service) => (
+                            {allServices.filter(s => s.active).slice(0, 6).map((service) => (
                                 <div key={service.id} className="flex items-center justify-between p-3 border border-gray-50 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: service.color }} />
@@ -267,18 +277,60 @@ export function Dashboard() {
                 </div>
             </div>
 
-            {/* WhatsApp Modal */}
+            {/* Appointment Form Modal */}
+            <Modal
+                isOpen={showForm}
+                onClose={resetForm}
+                title={editingId ? "Editar Agendamento" : "Novo Agendamento"}
+            >
+                <AppointmentForm
+                    formData={formData}
+                    setFormData={setFormData}
+                    appointments={allAppointments}
+                    clients={clients}
+                    services={services}
+                    staff={staff}
+                    onSubmit={handleSubmit}
+                    onCancel={resetForm}
+                    handleServiceToggle={handleServiceToggle}
+                    formatCurrency={formatCurrency}
+                    editingId={editingId}
+                    TIMES={TIMES}
+                />
+            </Modal>
+
+            {/* Payment Modal */}
+            <Modal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                title="Registrar Pagamento"
+            >
+                <PaymentForm
+                    paymentValue={paymentValue}
+                    setPaymentValue={setPaymentValue}
+                    paymentMethod={paymentMethod}
+                    setPaymentMethod={setPaymentMethod}
+                    onSubmit={confirmPayment}
+                    onCancel={() => setShowPaymentModal(false)}
+                    loading={isSubmittingPayment}
+                />
+            </Modal>
+
+            {/* WhatsApp Modals */}
             <WhatsAppModal
                 isOpen={showWhatsAppModal}
-                onClose={() => {
-                    setShowWhatsAppModal(false);
-                    setWhatsAppAppointment(null);
-                    setIsBirthdayMode(false);
-                }}
+                onClose={() => setShowWhatsAppModal(false)}
                 appointment={whatsAppAppointment}
                 clientPhone={whatsAppPhone}
-                clientName={whatsAppName}
-                isBirthday={isBirthdayMode}
+            />
+
+            <WhatsAppModal
+                isOpen={!!birthdayWA}
+                onClose={() => setBirthdayWA(null)}
+                clientName={birthdayWA?.name}
+                clientPhone={birthdayWA?.phone}
+                isBirthday={true}
+                appointment={null}
             />
         </div>
     );
