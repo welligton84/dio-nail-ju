@@ -1,14 +1,44 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-
 import { VitePWA } from 'vite-plugin-pwa';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: {
+      vm: './src/lib/vm-shim.js',
+      buffer: 'buffer/',
+      crypto: 'crypto-js',
+      process: 'process/browser',
+    }
+  },
+  define: {
+    global: 'globalThis',
+    Buffer: 'Buffer',
+  },
+  optimizeDeps: {
+    exclude: ['xml-crypto', '@xmldom/xmldom', 'node-forge'],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+        Buffer: 'Buffer'
+      }
+    }
+  },
   plugins: [
     react(),
     tailwindcss(),
+    nodePolyfills({
+      include: ['crypto', 'util', 'buffer', 'stream', 'process'],
+      globals: {
+        crypto: true,
+        util: true,
+        Buffer: true,
+        process: true,
+      }
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['logo.png'],
@@ -67,4 +97,18 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      external: [],
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'firebase-core': ['firebase/app', 'firebase/auth'],
+          'firebase-db': ['firebase/firestore', 'firebase/storage'],
+          'vendor-ui': ['lucide-react', 'sonner', 'zod']
+        }
+      }
+    }
+  }
 })

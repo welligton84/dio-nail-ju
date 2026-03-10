@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import type { FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import type { Auth } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 import type { Functions } from 'firebase/functions';
@@ -32,19 +32,12 @@ if (isFirebaseConfigured()) {
     try {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
-        db = getFirestore(app);
+        db = initializeFirestore(app, {
+            localCache: persistentLocalCache({
+                tabManager: persistentMultipleTabManager()
+            })
+        });
         functions = getFunctions(app, 'southamerica-east1'); // Standard for Brazil
-
-        // Enable offline persistence
-        if (typeof window !== 'undefined') {
-            enableIndexedDbPersistence(db).catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn('Persistence failed-precondition: Multiple tabs open?');
-                } else if (err.code === 'unimplemented') {
-                    console.warn('Persistence unimplemented: Browser doesn\'t support it.');
-                }
-            });
-        }
 
         console.log('Firebase initialized successfully');
     } catch (error) {

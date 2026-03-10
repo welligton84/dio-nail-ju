@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import {
     signInWithEmailAndPassword,
     signOut,
@@ -6,8 +6,10 @@ import {
     updatePassword
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, collection, getDocs, limit, query } from 'firebase/firestore';
-import { auth, db, functions } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { functions } from '../lib/firebase';
 import { httpsCallable } from 'firebase/functions';
+import { getAuthErrorMessage, getFirebaseErrorCode } from '../utils/firebase-error';
 import { toast } from 'sonner';
 import type { ReactNode } from 'react';
 import type { User } from '../types';
@@ -23,6 +25,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+export { AuthContext };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -40,6 +43,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
                         if (userDoc.exists()) {
                             const userData = userDoc.data() as User;
+                            
+                            // Check if user is active
+                            if (!userData.active) {
+                                toast.error('Usuário inativo. Entre em contato com o administrador.');
+                                if (auth) {
+                                    await signOut(auth);
+                                }
+                                setUser(null);
+                                return;
+                            }
+                            
                             setUser({ ...userData, id: firebaseUser.uid, email: firebaseUser.email! });
                         } else {
                             // First time login, user exists in Auth but not in Firestore 'users' collection
@@ -78,8 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             createdAt: new Date().toISOString()
                         });
 
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        if ((error as any).code === 'permission-denied') {
+                        if (getFirebaseErrorCode(error) === 'permission-denied') {
                             toast.error('Erro de permissão no Firestore. Verifique as regras no Console.');
                         }
                     }
@@ -100,13 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return { success: true };
         } catch (error) {
             console.error('Erro ao fazer login:', error);
-            let message = 'E-mail ou senha incorretos';
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const code = (error as any).code;
-            if (code === 'auth/user-not-found') message = 'Usuário não encontrado';
-            if (code === 'auth/wrong-password') message = 'Senha incorreta';
-            if (code === 'auth/network-request-failed') message = 'Erro de conexão com o servidor';
-            return { success: false, error: message };
+            return { success: false, error: getAuthErrorMessage(error) };
         }
     };
 
@@ -116,17 +123,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const addUser = async (newUser: Omit<User, 'id' | 'createdAt'>, password?: string) => {
-        if (!functions) return;
+        if (!db || !functions) return;
+        
+        if (!user || (user.role !== 'admin' && user.role !== 'Administrador')) {
+            toast.error('Apenas administradores podem criar novos usuários.');
+            return;
+        }
+
+        if (!password || password.length < 6) {
+            toast.error('Senha é obrigatória e deve ter no mínimo 6 caracteres.');
+            return;
+        }
+
         try {
+            const existingUsersQuery = query(collection(db, 'users'), limit(100));
+            const snapshot = await getDocs(existingUsersQuery);
+            const existingUser = snapshot.docs.find(doc => doc.data().email === newUser.email);
+            
+            if (existingUser) {
+                toast.error('Já existe um usuário cadastrado com este e-mail.');
+                return;
+            }
+
+            // P0.1: Use Cloud Function to create user without logging out admin
             const createUserAuth = httpsCallable(functions, 'createUserAuth');
-            await createUserAuth({
-                ...newUser,
-                password: password || '123456' // Default if not provided
+            const result = await createUserAuth({
+                email: newUser.email,
+                password: password,
+                name: newUser.name,
+                role: newUser.role || 'employee'
             });
-            toast.success('Usuário criado com sucesso no Authentication e no Banco de Dados!');
-        } catch (error: any) {
-            console.error('Erro ao adicionar usuário via Cloud Function:', error);
-            toast.error(`Erro ao criar usuário: ${error.message}`);
+
+            if (result.data && typeof result.data === 'object' && 'success' in result.data && result.data.success) {
+                toast.success('Usuário criado com sucesso!');
+            } else {
+                throw new Error(result.data && typeof result.data === 'object' && 'error' in result.data 
+                    ? String(result.data.error) 
+                    : 'Erro desconhecido');
+            }
+        } catch (error: unknown) {
+            console.error('Erro ao adicionar usuário:', error);
+            const errorMsg = error instanceof Error ? error.message : getAuthErrorMessage(error);
+            toast.error(errorMsg);
         }
     };
 
@@ -169,12 +207,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             {children}
         </AuthContext.Provider>
     );
-}
-
-export function useAuth(): AuthContextType {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
 }

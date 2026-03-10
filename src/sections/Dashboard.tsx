@@ -1,39 +1,28 @@
-import { useState, useEffect } from 'react';
-import { useData } from '../contexts/DataContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useState } from 'react';
+import { useData } from '../contexts/useData';
 import {
     Users,
     Calendar,
     TrendingUp,
     DollarSign,
     Clock,
-    Gift,
-    Cake,
-    MessageCircle,
-    Sun,
-    Moon
+    Sparkles
 } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { StatCardSkeleton } from '../components/shared/Skeleton';
 import { formatCurrency } from '../utils/currency';
 import { WhatsAppModal } from '../components/shared/WhatsAppModal';
-import { isBirthdayToday } from '../utils/birthday';
 import { useAppointmentManagement } from '../hooks/useAppointmentManagement';
 import { AppointmentCard } from './appointments/AppointmentCard';
 import { Modal } from '../components/shared/Modal';
 import { AppointmentForm } from './appointments/AppointmentForm';
 import { PaymentForm } from './appointments/PaymentForm';
-
-const TIMES = [
-    '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-    '18:00', '18:30', '19:00', '19:30', '20:00', '20:30'
-];
+import { TIMES } from '../utils/constants';
+import { BirthdayWidget } from './dashboard/BirthdayWidget';
+import { ServiceListWidget } from './dashboard/ServiceListWidget';
 
 export function Dashboard() {
-    const { dashboardStats, loading, todayBirthdays, monthBirthdays, services: allServices, financialRecords, deleteFinancialRecord } = useData();
-    const { theme, toggleTheme } = useTheme();
+    const { dashboardStats, loading, todayBirthdays, monthBirthdays, services: allServices } = useData();
 
     const {
         appointments: allAppointments,
@@ -45,10 +34,8 @@ export function Dashboard() {
         showPaymentModal,
         setShowPaymentModal,
         isSubmittingPayment,
-        paymentValue,
-        setPaymentValue,
-        paymentMethod,
-        setPaymentMethod,
+        payments,
+        setPayments,
         showWhatsAppModal,
         setShowWhatsAppModal,
         whatsAppAppointment,
@@ -69,54 +56,31 @@ export function Dashboard() {
         handleWhatsApp,
         confirmPayment,
         handleDelete,
-        handleServiceToggle
+        handleServiceToggle,
+        finishingAppointment
     } = useAppointmentManagement();
 
-    // TEMPORARY: Cleanup duplicate records for Yasmin Cecilia Dos Santos (2026-02-09)
-    useEffect(() => {
-        if (loading || financialRecords.length === 0) return;
 
-        const TARGET_NAME = "Yasmin Cecilia Dos Santos";
-        const TARGET_DATE = "2026-02-09";
-
-        const yasminRecords = financialRecords.filter(r =>
-            r.description.includes(TARGET_NAME) &&
-            r.date === TARGET_DATE &&
-            r.type === 'income'
-        );
-
-        if (yasminRecords.length > 1) {
-            console.log(`[CLEANUP] Found ${yasminRecords.length} records for Yasmin. Removing duplicates...`);
-            // Keep the first one, delete others
-            const duplicates = yasminRecords.slice(1);
-            duplicates.forEach(async (record) => {
-                try {
-                    await deleteFinancialRecord(record.id);
-                    console.log(`[CLEANUP] Deleted duplicate record: ${record.id}`);
-                } catch (err) {
-                    console.error(`[CLEANUP] Error deleting record ${record.id}:`, err);
-                }
-            });
-        }
-    }, [loading, financialRecords, deleteFinancialRecord]);
 
     // Local state for birthday WhatsApp
     const [birthdayWA, setBirthdayWA] = useState<{ name: string, phone: string } | null>(null);
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Olá, Juliana!</h1>
-                    <p className="text-gray-500 dark:text-gray-400 mt-1">Veja o que está acontecendo hoje no studio.</p>
+            {/* Welcome Banner */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500 via-rose-500 to-purple-600 p-6 sm:p-8 text-white shadow-xl shadow-pink-500/20">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-5 h-5 text-pink-100" />
+                        <span className="text-sm font-medium text-pink-100">Bom dia! ✨</span>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">Juliana Miranda Concept</h1>
+                    <p className="text-pink-100 text-sm sm:text-base max-w-xl">
+                        Hoje você tem {dashboardStats.todayAppointments} agendamentos.
+                        Continue assim! 💅
+                    </p>
                 </div>
-                <button
-                    onClick={toggleTheme}
-                    className="p-3 rounded-xl bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all border border-gray-200 dark:border-gray-800 shadow-sm"
-                    title="Alternar tema"
-                >
-                    {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                </button>
             </div>
 
             {/* Metrics Grid */}
@@ -140,7 +104,7 @@ export function Dashboard() {
                             title="Hoje"
                             value={dashboardStats.todayAppointments}
                             icon={Calendar}
-                            color="bg-purple-500"
+                            color="bg-blue-600"
                         />
                         <StatCard
                             title="Receita / Mês"
@@ -203,77 +167,15 @@ export function Dashboard() {
 
             {/* Birthdays and Services */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-                {/* Today's Birthdays */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-full">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            <Cake className="w-5 h-5 text-pink-500" />
-                            Aniversariantes do Dia
-                        </h2>
-                        {todayBirthdays.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-8 text-center">
-                                <Gift className="w-10 h-10 text-gray-200 dark:text-gray-800 mb-2" />
-                                <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Ninguém faz aniversário hoje.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {todayBirthdays.map((client) => (
-                                    <div key={client.id} className="flex items-center justify-between p-3 bg-pink-50 dark:bg-pink-900/10 rounded-xl">
-                                        <div>
-                                            <p className="font-bold text-gray-900 dark:text-white text-sm">{client.name}</p>
-                                            <p className="text-xs text-pink-600 dark:text-pink-400 font-medium tracking-tighter uppercase">Parabéns! 🎉</p>
-                                        </div>
-                                        <button
-                                            onClick={() => setBirthdayWA({ name: client.name, phone: client.phone })}
-                                            className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-sm"
-                                            title="Enviar Parabéns"
-                                        >
-                                            <MessageCircle className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {monthBirthdays.length > 0 && (
-                            <div className="mt-6 pt-6 border-t border-gray-50 dark:border-gray-800">
-                                <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">No mês</h3>
-                                <div className="space-y-3 max-h-[150px] overflow-y-auto pr-1">
-                                    {monthBirthdays.filter(c => !isBirthdayToday(c.birthDate!)).map(client => (
-                                        <div key={client.id} className="flex items-center justify-between">
-                                            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">{client.name}</span>
-                                            <span className="text-xs font-bold text-gray-400 dark:text-gray-500">
-                                                {client.birthDate?.split('-')[2]}/{client.birthDate?.split('-')[1]}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    <BirthdayWidget
+                        todayBirthdays={todayBirthdays}
+                        monthBirthdays={monthBirthdays}
+                        onSendWhatsApp={(name, phone) => setBirthdayWA({ name, phone })}
+                    />
                 </div>
-
-                {/* Popular Services Mini List */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 h-full">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-green-500" />
-                                Serviços Ativos
-                            </h2>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {allServices.filter(s => s.active).slice(0, 6).map((service) => (
-                                <div key={service.id} className="flex items-center justify-between p-3 border border-gray-50 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: service.color }} />
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{service.name}</span>
-                                    </div>
-                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(service.price)}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <ServiceListWidget services={allServices} />
                 </div>
             </div>
 
@@ -306,13 +208,12 @@ export function Dashboard() {
                 title="Registrar Pagamento"
             >
                 <PaymentForm
-                    paymentValue={paymentValue}
-                    setPaymentValue={setPaymentValue}
-                    paymentMethod={paymentMethod}
-                    setPaymentMethod={setPaymentMethod}
+                    payments={payments}
+                    setPayments={setPayments}
                     onSubmit={confirmPayment}
                     onCancel={() => setShowPaymentModal(false)}
                     loading={isSubmittingPayment}
+                    totalExpectedValue={finishingAppointment?.totalValue || 0}
                 />
             </Modal>
 

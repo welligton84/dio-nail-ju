@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useData } from '../contexts/DataContext';
+import { useData } from '../contexts/useData';
 import type { ClientFormData } from '../types';
 import { Plus, Search, Edit2, Trash2, User, Phone, Calendar, X, MessageSquare } from 'lucide-react';
 import { WhatsAppModal } from '../components/shared/WhatsAppModal';
 import { ClientForm } from '../components/ClientForm';
 import { formatDateBR } from '../utils/format';
+import { AppointmentStatus } from '../types/enums';
 
 export function Clients() {
     const { clients, addClient, updateClient, deleteClient, appointments } = useData();
@@ -182,18 +183,18 @@ export function Clients() {
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div>
                                                         <p className="font-bold text-gray-900 dark:text-white">{formatDate(apt.date)} às {apt.time}</p>
-                                                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${apt.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
-                                                            apt.status === 'scheduled' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
-                                                                apt.status === 'confirmed' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
-                                                                    apt.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
-                                                                        apt.status === 'no-show' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                                                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${apt.status === AppointmentStatus.COMPLETED ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                                                            apt.status === AppointmentStatus.SCHEDULED ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                                                                apt.status === AppointmentStatus.CONFIRMED ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
+                                                                    apt.status === AppointmentStatus.CANCELLED ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                                                                        apt.status === AppointmentStatus.NOSHOW ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
                                                                             'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
                                                             }`}>
-                                                            {apt.status === 'completed' ? 'Concluído' :
-                                                                apt.status === 'scheduled' ? 'Agendado' :
-                                                                    apt.status === 'confirmed' ? 'Confirmado' :
-                                                                        apt.status === 'cancelled' ? 'Cancelado' :
-                                                                            apt.status === 'no-show' ? 'Não compareceu' :
+                                                            {apt.status === AppointmentStatus.COMPLETED ? 'Concluído' :
+                                                                apt.status === AppointmentStatus.SCHEDULED ? 'Agendado' :
+                                                                    apt.status === AppointmentStatus.CONFIRMED ? 'Confirmado' :
+                                                                        apt.status === AppointmentStatus.CANCELLED ? 'Cancelado' :
+                                                                            apt.status === AppointmentStatus.NOSHOW ? 'Não compareceu' :
                                                                                 apt.status}
                                                         </span>
                                                     </div>

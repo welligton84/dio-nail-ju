@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Monitor, Smartphone, Copy, Check } from 'lucide-react';
-import { getBirthdayMessage } from '../../utils/birthday';
 import type { Appointment } from '../../types';
 import { formatDateToBR } from '../../utils/date';
+import { useSettings } from '../../contexts/SettingsContext';
+import { formatPhone } from '../../utils/format';
 
 interface WhatsAppModalProps {
     isOpen: boolean;
@@ -20,35 +21,48 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
     const [message, setMessage] = useState('');
     const [template, setTemplate] = useState<TemplateType>('custom');
     const [copied, setCopied] = useState(false);
+    const { messages, company } = useSettings();
+
+    const replaceVariables = (text: string, appt?: Appointment | null, name?: string): string => {
+        let result = text;
+        
+        const client = name || appt?.clientName || 'Cliente';
+        result = result.replace(/{cliente}/g, client);
+        
+        if (appt) {
+            result = result.replace(/{data}/g, formatDateToBR(appt.date));
+            result = result.replace(/{hora}/g, appt.time);
+            result = result.replace(/{servicos}/g, appt.services.map(s => s.name).join(', '));
+        }
+        
+        result = result.replace(/{estabelecimento}/g, company.name || 'Juliana Miranda Concept');
+        
+        return result;
+    };
 
     const getTemplateMessage = (type: TemplateType) => {
         if (!appointment && type === 'custom') return '';
         if (!appointment && type !== 'custom') return '';
 
         if (appointment) {
-            const date = formatDateToBR(appointment.date);
-            const time = appointment.time;
-            const apptClientName = appointment.clientName;
-            const services = appointment.services.map(s => s.name).join(', ');
-
             switch (type) {
                 case 'confirmation':
-                    return `Olá ${apptClientName}! ✨\nPassando para confirmar seu agendamento para *${date} às ${time}*.\nServiços: ${services}.\n\nPodemos confirmar? 💅`;
+                    return replaceVariables(messages.confirmation, appointment);
                 case 'reminder':
-                    return `Oie ${apptClientName}! ⏰\nLembrete do seu horário hoje às *${time}* no Juliana Miranda Concept.\nEstamos te esperando! ✨`;
+                    return replaceVariables(messages.reminder, appointment);
                 case 'delay':
-                    return `Oi ${apptClientName}, tudo bem? 🙏\nTivemos um pequeno atraso aqui no Studio. Poderia vir 15 minutinhos mais tarde?\nDesculpe o transtorno!`;
+                    return replaceVariables(messages.delay, appointment);
                 case 'thanks':
-                    return `Obrigada pela visita, ${apptClientName}! 💖\nFoi um prazer te atender. Se puder, nos marque na foto das unhas! 📸\nAté a próxima!`;
+                    return replaceVariables(messages.thanks, appointment);
                 case 'birthday':
-                    return getBirthdayMessage(apptClientName);
+                    return replaceVariables(messages.birthday, appointment);
                 case 'custom':
                     return message;
                 default:
                     return '';
             }
         } else if (clientName && type === 'birthday') {
-            return getBirthdayMessage(clientName);
+            return replaceVariables(messages.birthday, null, clientName);
         }
         return '';
     };
@@ -56,14 +70,12 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
     const generateMessage = (type: TemplateType) => {
         const text = getTemplateMessage(type);
 
-        // Special case: Clear message for custom type if no appointment
         if (!appointment && type === 'custom') {
             setMessage('');
             setTemplate('custom');
             return;
         }
 
-        // If no appointment, only allow 'custom' or 'birthday' (if clientName exists)
         if (!appointment) {
             if (type !== 'birthday' || !clientName) {
                 return;
@@ -72,37 +84,58 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
 
         setTemplate(type);
 
-        // For all non-custom types (including birthday), set the generated message
         if (type !== 'custom') {
             setMessage(text);
         }
     };
 
-    // Corrected useEffect
-    useEffect(() => {
-        if (isOpen) {
-            if (isBirthday && clientName) {
-                const text = getBirthdayMessage(clientName);
-                setMessage(text);
-                setTemplate('birthday');
-            } else if (appointment && clientPhone) {
-                // Use helper to avoid dependency on 'message' state
-                // We recreate the logic for 'confirmation' specifically
-                if (appointment) { // Redundant check for TS but safe
-                    const date = formatDateToBR(appointment.date);
-                    const time = appointment.time;
-                    const cName = appointment.clientName;
-                    const services = appointment.services.map(s => s.name).join(', ');
-                    const text = `Olá ${cName}! ✨\nPassando para confirmar seu agendamento para *${date} às ${time}*.\nServiços: ${services}.\n\nPodemos confirmar? 💅`;
-                    setMessage(text);
-                    setTemplate('confirmation');
-                }
-            } else if (clientPhone) {
-                setTemplate('custom');
-                setMessage(`Olá! Gostaria de falar com você sobre...`);
+    // Calculate initial message and template based on props
+    const initialMessageData = useMemo(() => {
+        const replaceVars = (text: string, appt?: Appointment | null, name?: string): string => {
+            let result = text;
+            const client = name || appt?.clientName || 'Cliente';
+            result = result.replace(/{cliente}/g, client);
+            if (appt) {
+                result = result.replace(/{data}/g, formatDateToBR(appt.date));
+                result = result.replace(/{hora}/g, appt.time);
+                result = result.replace(/{servicos}/g, appt.services.map(s => s.name).join(', '));
             }
+            result = result.replace(/{estabelecimento}/g, company.name || 'Juliana Miranda Concept');
+            return result;
+        };
+
+        if (isBirthday && clientName) {
+            return {
+                message: replaceVars(messages.birthday, null, clientName),
+                template: 'birthday' as TemplateType
+            };
         }
-    }, [appointment, clientPhone, clientName, isBirthday, isOpen]);
+        if (appointment && clientPhone) {
+            return {
+                message: replaceVars(messages.confirmation, appointment),
+                template: 'confirmation' as TemplateType
+            };
+        }
+        if (clientPhone) {
+            return {
+                message: 'Olá! Gostaria de falar com você sobre...',
+                template: 'custom' as TemplateType
+            };
+        }
+        return {
+            message: '',
+            template: 'custom' as TemplateType
+        };
+    }, [isBirthday, clientName, appointment, clientPhone, messages, company]);
+
+    // Reset message when modal opens with new data
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMessage(initialMessageData.message);
+        setTemplate(initialMessageData.template);
+    }, [isOpen, initialMessageData]);
 
     const handleSend = (platform: 'web' | 'desktop') => {
         if (!clientPhone) return;
@@ -138,7 +171,7 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
                 {/* Template Selector - Only show if appointment exists */}
                 {appointment && (
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-700">Escolha o Modelo</label>
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Escolha o Modelo</label>
                         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                             <button
                                 onClick={() => generateMessage('confirmation')}
@@ -171,13 +204,13 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
                 {/* Message Editor */}
                 <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                        <label className="text-sm font-bold text-gray-700">Mensagem</label>
+                        <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Mensagem</label>
                         <button
                             onClick={copyToClipboard}
-                            className="text-xs flex items-center gap-1 text-gray-500 hover:text-green-600 transition-colors"
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                         >
                             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                            {copied ? 'Copiado!' : 'Copiar texto'}
+                            {copied ? 'Copiado!' : 'Copiar'}
                         </button>
                     </div>
                     <textarea
@@ -186,29 +219,45 @@ export function WhatsAppModal({ isOpen, onClose, appointment, clientPhone, clien
                             setMessage(e.target.value);
                             setTemplate('custom');
                         }}
-                        className="w-full h-32 p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none text-sm leading-relaxed"
+                        rows={6}
+                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none bg-white dark:bg-gray-800 dark:text-white resize-none"
                         placeholder="Digite sua mensagem..."
                     />
+                    <div className="flex gap-2 flex-wrap">
+                        <span className="text-xs text-gray-400">Variáveis:</span>
+                        <span className="text-xs px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded">{'{cliente}'}</span>
+                        <span className="text-xs px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded">{'{data}'}</span>
+                        <span className="text-xs px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded">{'{hora}'}</span>
+                        <span className="text-xs px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded">{'{servicos}'}</span>
+                        <span className="text-xs px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 rounded">{'{estabelecimento}'}</span>
+                    </div>
                 </div>
 
-                {/* Actions */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                {/* Phone Display */}
+                {clientPhone && (
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Enviar para:</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{formatPhone(clientPhone)}</span>
+                    </div>
+                )}
+
+                {/* Send Buttons */}
+                <div className="flex gap-3">
                     <button
                         onClick={() => handleSend('web')}
-                        className="flex flex-col items-center justify-center gap-2 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all group"
+                        disabled={!clientPhone}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Smartphone className="w-6 h-6 text-gray-400 group-hover:text-green-600 transition-colors" />
-                        <span className="font-bold text-gray-600 group-hover:text-gray-900">WhatsApp Web</span>
-                        <span className="text-[10px] text-gray-400 uppercase tracking-wider">Navegador</span>
+                        <Monitor className="w-5 h-5" />
+                        WhatsApp Web
                     </button>
-
                     <button
                         onClick={() => handleSend('desktop')}
-                        className="flex flex-col items-center justify-center gap-2 p-4 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 hover:border-green-300 transition-all group"
+                        disabled={!clientPhone}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Monitor className="w-6 h-6 text-green-600 group-hover:scale-110 transition-transform" />
-                        <span className="font-bold text-green-800">App Desktop</span>
-                        <span className="text-[10px] text-green-600 uppercase tracking-wider">Instalado</span>
+                        <Smartphone className="w-5 h-5" />
+                        App
                     </button>
                 </div>
             </div>

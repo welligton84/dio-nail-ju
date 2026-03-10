@@ -21,7 +21,7 @@ export function Skeleton({ className = '', variant = 'text' }: SkeletonProps) {
 
 export function StatCardSkeleton() {
     return (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="card-professional p-5">
             <div className="flex items-center justify-between mb-4">
                 <Skeleton variant="rectangular" className="w-12 h-12 rounded-xl" />
             </div>

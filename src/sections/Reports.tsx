@@ -1,18 +1,45 @@
-import { useMemo, useState, useCallback } from 'react';
-import { useData } from '../contexts/DataContext';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useData } from '../contexts/useData';
 import { BarChart3, Users, Calendar, DollarSign, TrendingUp, PieChart, RefreshCw } from 'lucide-react';
 import { StatCard } from '../components/shared/StatCard';
 import { Table } from '../components/shared/Table';
 import { formatCurrency } from '../utils/currency';
+import { MONTHS } from '../utils/constants';
 import type { Service, Appointment, FinancialRecord, Staff } from '../types';
 
+interface StaffCommission extends Staff {
+    totalSales: number;
+    commissionAmount: number;
+    count: number;
+}
+
 export function Reports() {
-    const { clients, services, appointments, financialRecords, staff, syncVisitCounts, dashboardStats } = useData();
+    const {
+        clients,
+        services,
+        appointments,
+        financialRecords,
+        staff,
+        syncVisitCounts,
+        dashboardStats,
+        loadFinancialByPeriod,
+        loadAppointmentsByPeriod
+    } = useData();
 
     // Get current month/year for initial state
     const now = new Date();
     const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+
+    // Filter current period (Busca Sob Demanda)
+    useEffect(() => {
+        const startDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
+        const lastDayStr = String(new Date(selectedYear, selectedMonth, 0).getDate()).padStart(2, '0');
+        const endDate = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${lastDayStr}`;
+
+        loadFinancialByPeriod(startDate, endDate);
+        loadAppointmentsByPeriod(startDate, endDate);
+    }, [selectedMonth, selectedYear, loadFinancialByPeriod, loadAppointmentsByPeriod]);
 
     // Helper function to check if a date matches selected month/year
     const isSelectedMonth = useCallback((dateString: string) => {
@@ -22,20 +49,7 @@ export function Reports() {
 
     // Generate year options (current year and previous 2 years)
     const yearOptions = Array.from({ length: 3 }, (_, i) => now.getFullYear() - i);
-    const monthOptions = [
-        { value: 1, label: 'Janeiro' },
-        { value: 2, label: 'Fevereiro' },
-        { value: 3, label: 'Março' },
-        { value: 4, label: 'Abril' },
-        { value: 5, label: 'Maio' },
-        { value: 6, label: 'Junho' },
-        { value: 7, label: 'Julho' },
-        { value: 8, label: 'Agosto' },
-        { value: 9, label: 'Setembro' },
-        { value: 10, label: 'Outubro' },
-        { value: 11, label: 'Novembro' },
-        { value: 12, label: 'Dezembro' },
-    ];
+    const monthOptions = MONTHS;
 
     // Calculate service popularity
     const serviceStats = useMemo(() => services.map((service: Service) => {
@@ -67,7 +81,7 @@ export function Reports() {
         }, {}), [financialRecords, isSelectedMonth]);
 
     // Calculate commissions by staff (filtered by selected month)
-    const staffCommissions = useMemo(() => staff.map((member: Staff) => {
+    const staffCommissions = useMemo((): StaffCommission[] => staff.map((member: Staff) => {
         const completedApts = appointments.filter((apt: Appointment) =>
             apt.staffId === member.id &&
             apt.status === 'completed' &&
@@ -288,12 +302,12 @@ export function Reports() {
                     emptyMessage="Nenhum dado disponível. Complete agendamentos para ver o desempenho."
                     footer={commissionFooter}
                     columns={[
-                        { header: 'Profissional', accessor: (m: any) => <span className="font-bold text-gray-900 dark:text-white">{m.name}</span> },
-                        { header: 'Cargo', accessor: (m: any) => <span className="text-gray-700 dark:text-gray-300">{m.role}</span> },
-                        { header: 'Serviços', accessor: (m: any) => <span className="text-gray-700 dark:text-gray-300">{m.count} concluídos</span> },
-                        { header: 'Venda Total', accessor: (m: any) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(m.totalSales)}</span> },
-                        { header: 'Comissão (%)', accessor: (m: any) => <span className="text-gray-700 dark:text-gray-300">{m.commission}%</span> },
-                        { header: 'A Pagar', accessor: (m: any) => <span className="font-bold text-pink-600 dark:text-pink-400">{formatCurrency(m.commissionAmount)}</span>, className: 'text-right' },
+                        { header: 'Profissional', accessor: (m: StaffCommission) => <span className="font-bold text-gray-900 dark:text-white">{m.name}</span> },
+                        { header: 'Cargo', accessor: (m: StaffCommission) => <span className="text-gray-700 dark:text-gray-300">{m.role}</span> },
+                        { header: 'Serviços', accessor: (m: StaffCommission) => <span className="text-gray-700 dark:text-gray-300">{m.count} concluídos</span> },
+                        { header: 'Venda Total', accessor: (m: StaffCommission) => <span className="font-medium text-gray-700 dark:text-gray-300">{formatCurrency(m.totalSales)}</span> },
+                        { header: 'Comissão (%)', accessor: (m: StaffCommission) => <span className="text-gray-700 dark:text-gray-300">{m.commission}%</span> },
+                        { header: 'A Pagar', accessor: (m: StaffCommission) => <span className="font-bold text-pink-600 dark:text-pink-400">{formatCurrency(m.commissionAmount)}</span>, className: 'text-right' },
                     ]}
                 />
             </div>

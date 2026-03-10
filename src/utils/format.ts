@@ -21,8 +21,10 @@ export function formatCPF(value: string): string {
  * @example formatPhone('11999998888') => '(11) 99999-8888'
  */
 export function formatPhone(value: string): string {
-    return value
-        .replace(/\D/g, '')
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 2) return digits;
+
+    return digits
         .replace(/(\d{2})(\d)/, '($1) $2')
         .replace(/(\d{5})(\d)/, '$1-$2')
         .replace(/(-\d{4})\d+?$/, '$1');

@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { MainLayout } from '../components/MainLayout';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { SectionLoader } from '../components/SectionLoader';
 
 // Lazy load sections for better performance
 const Dashboard = lazy(() => import('../sections/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -12,14 +14,9 @@ const Finance = lazy(() => import('../sections/Finance').then(m => ({ default: m
 const Reports = lazy(() => import('../sections/Reports').then(m => ({ default: m.Reports })));
 const Users = lazy(() => import('../sections/Users').then(m => ({ default: m.Users })));
 const Staff = lazy(() => import('../sections/Staff').then(m => ({ default: m.Staff })));
+const Settings = lazy(() => import('../sections/Settings').then(m => ({ default: m.Settings })));
+const NFSeRecords = lazy(() => import('../sections/NFSeRecords').then(m => ({ default: m.NFSeRecords })));
 const Login = lazy(() => import('../sections/Login').then(m => ({ default: m.Login })));
-
-// Loading component for Suspense
-const SectionLoader = () => (
-    <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-12 h-12 border-4 border-pink-100 border-t-pink-500 rounded-full animate-spin"></div>
-    </div>
-);
 
 export const router = createBrowserRouter([
     {
@@ -34,7 +31,9 @@ export const router = createBrowserRouter([
         path: '/',
         element: (
             <ProtectedRoute>
-                <MainLayout />
+                <ErrorBoundary>
+                    <MainLayout />
+                </ErrorBoundary>
             </ProtectedRoute>
         ),
         children: [
@@ -73,6 +72,14 @@ export const router = createBrowserRouter([
             {
                 path: 'staff',
                 element: <Suspense fallback={<SectionLoader />}><Staff /></Suspense>
+            },
+            {
+                path: 'settings',
+                element: <Suspense fallback={<SectionLoader />}><Settings /></Suspense>
+            },
+            {
+                path: 'nfse',
+                element: <Suspense fallback={<SectionLoader />}><NFSeRecords /></Suspense>
             },
             {
                 path: '*',

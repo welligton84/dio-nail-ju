@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useData } from '../contexts/DataContext';
+import { useData } from '../contexts/useData';
 import {
     Plus,
     Edit2,
@@ -9,7 +9,8 @@ import {
     X
 } from 'lucide-react';
 import { formatDuration } from '../utils/date';
-import type { ServiceCategory, ServiceFormData } from '../types';
+import { toast } from 'sonner';
+import type { ServiceCategory, ServiceFormData, Service } from '../types';
 
 export function Services() {
     const { services, addService, updateService, deleteService, loading } = useData();
@@ -44,11 +45,11 @@ export function Services() {
             resetForm();
         } catch (error) {
             console.error('Error saving service:', error);
-            alert('Erro ao salvar serviço');
+            toast.error('Erro ao salvar serviço');
         }
     };
 
-    const handleEdit = (service: any) => {
+    const handleEdit = (service: Service) => {
         setFormData({
             name: service.name,
             price: service.price.toString(),
@@ -69,7 +70,7 @@ export function Services() {
                 await deleteService(id);
             } catch (error) {
                 console.error('Error deleting service:', error);
-                alert('Erro ao excluir serviço');
+                toast.error('Erro ao excluir serviço');
             }
         }
     };
@@ -207,10 +208,12 @@ export function Services() {
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label htmlFor="service-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Nome do Serviço
                                     </label>
                                     <input
+                                        id="service-name"
+                                        name="name"
                                         type="text"
                                         required
                                         value={formData.name}
@@ -222,12 +225,14 @@ export function Services() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <label htmlFor="service-price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Preço (R$)
                                         </label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 font-medium">R$</span>
                                             <input
+                                                id="service-price"
+                                                name="price"
                                                 type="number"
                                                 required
                                                 min="0"
@@ -240,12 +245,14 @@ export function Services() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <label htmlFor="service-duration" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Duração (min)
                                         </label>
                                         <div className="relative">
                                             <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
                                             <input
+                                                id="service-duration"
+                                                name="duration"
                                                 type="number"
                                                 required
                                                 min="5"
@@ -260,12 +267,14 @@ export function Services() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <label htmlFor="service-commission" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Comissão (%)
                                         </label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 font-medium">%</span>
                                             <input
+                                                id="service-commission"
+                                                name="commissionRate"
                                                 type="number"
                                                 required
                                                 min="0"
@@ -278,11 +287,13 @@ export function Services() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <label htmlFor="service-color" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                             Cor do Card
                                         </label>
                                         <div className="flex items-center gap-2">
                                             <input
+                                                id="service-color"
+                                                name="color"
                                                 type="color"
                                                 value={formData.color}
                                                 onChange={(e) => setFormData({ ...formData, color: e.target.value })}
@@ -294,10 +305,12 @@ export function Services() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    <label htmlFor="service-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Descrição (Opcional)
                                     </label>
                                     <textarea
+                                        id="service-description"
+                                        name="description"
                                         rows={3}
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -309,12 +322,12 @@ export function Services() {
                                 <div className="flex items-center gap-2 pt-2">
                                     <input
                                         type="checkbox"
-                                        id="active"
+                                        id="service-active"
                                         checked={formData.active}
                                         onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                                         className="w-4 h-4 text-pink-500 rounded border-gray-300 focus:ring-pink-500"
                                     />
-                                    <label htmlFor="active" className="text-sm text-gray-700 dark:text-gray-300 font-medium cursor-pointer">
+                                    <label htmlFor="service-active" className="text-sm text-gray-700 dark:text-gray-300 font-medium cursor-pointer">
                                         Serviço Ativo
                                     </label>
                                 </div>

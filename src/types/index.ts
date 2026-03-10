@@ -1,9 +1,13 @@
+import { AppointmentStatus, FinancialType, PaymentMethod } from './enums';
+
+export { AppointmentStatus, FinancialType, PaymentMethod };
+
 // User types
 export interface User {
     id: string;
     email: string;
     name: string;
-    role: 'admin' | 'employee';
+    role: string; // Allow custom roles from Settings
     active: boolean;
     createdAt: string;
 }
@@ -84,27 +88,43 @@ export interface Appointment {
     paid: boolean;
 }
 
-export type AppointmentStatus =
-    | 'scheduled'
-    | 'confirmed'
-    | 'completed'
-    | 'cancelled'
-    | 'no-show';
-
 // Financial record types
 export interface FinancialRecord {
     id: string;
-    type: 'income' | 'expense';
+    type: FinancialType;
     category: string;
     description: string;
     value: number;
     date: string;
     createdAt: string;
     appointmentId?: string; // Link to appointment if income from service
-    paymentMethod: 'pix' | 'cash' | 'card';
+    paymentMethod: PaymentMethod | string;
+    nfseId?: string; // Link to NFSe record
+    conciliated?: boolean; // Bank reconciliation status
+    createdBy?: string; // User ID who created the record
+    updatedBy?: string; // User ID who last updated the record
 }
 
-export type PaymentMethod = 'pix' | 'cash' | 'card';
+export interface NFSeRecord {
+    id: string;
+    nfseNumber: string;
+    verificationCode: string;
+    clientName: string;
+    clientCpf?: string;
+    clientEmail?: string;
+    serviceDescription: string;
+    value: number;
+    issValue: number;
+    paymentMethod: string;
+    date: string;
+    issuedAt: string;
+    appointmentId: string;
+    provider: 'simplified' | 'national' | 'national_homolog' | 'isss' | 'webiss_juazeiro' | 'focusnfe' | 'plugnotas';
+    status: 'test' | 'sent' | 'confirmed' | 'error';
+    xmlUrl?: string;
+    pdfUrl?: string;
+    rawResponse?: unknown;
+}
 
 export const INCOME_CATEGORIES = ['Serviços', 'Produtos', 'Outros'] as const;
 export const EXPENSE_CATEGORIES = ['Produtos', 'Aluguel', 'Contas', 'Equipamentos', 'Marketing', 'Outros'] as const;
@@ -169,10 +189,10 @@ export interface StaffFormData {
 }
 
 export interface FinancialFormData {
-    type: 'income' | 'expense';
+    type: FinancialType;
     category: string;
     description: string;
     value: string;
     date: string;
-    paymentMethod: 'pix' | 'cash' | 'card';
+    paymentMethod: PaymentMethod;
 }

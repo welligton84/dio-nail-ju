@@ -8,13 +8,7 @@ import { DateSelector } from './appointments/DateSelector';
 import { PaymentForm } from './appointments/PaymentForm';
 import { useAppointmentManagement } from '../hooks/useAppointmentManagement';
 import { formatCurrency } from '../utils/currency';
-
-const TIMES = [
-    '07:00', '07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30',
-    '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-    '18:00', '18:30', '19:00', '19:30', '20:00', '20:30'
-];
+import { TIMES } from '../utils/constants';
 
 export function Appointments() {
     const {
@@ -30,10 +24,9 @@ export function Appointments() {
         showPaymentModal,
         setShowPaymentModal,
         isSubmittingPayment,
-        paymentValue,
-        setPaymentValue,
-        paymentMethod,
-        setPaymentMethod,
+        payments,
+        setPayments,
+        finishingAppointment,
         showWhatsAppModal,
         setShowWhatsAppModal,
         whatsAppAppointment,
@@ -131,13 +124,12 @@ export function Appointments() {
                 title="Registrar Pagamento"
             >
                 <PaymentForm
-                    paymentValue={paymentValue}
-                    setPaymentValue={setPaymentValue}
-                    paymentMethod={paymentMethod}
-                    setPaymentMethod={setPaymentMethod}
+                    payments={payments}
+                    setPayments={setPayments}
                     onSubmit={confirmPayment}
                     onCancel={() => setShowPaymentModal(false)}
                     loading={isSubmittingPayment}
+                    totalExpectedValue={finishingAppointment?.totalValue || 0}
                 />
             </Modal>
 

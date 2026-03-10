@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useData } from '../contexts/DataContext';
+import { useData } from '../contexts/useData';
 import type { StaffFormData } from '../types';
 import { Plus, Search, Edit2, Trash2, User, Phone, X, Award, Percent } from 'lucide-react';
+import { formatPhone } from '../utils/format';
 
 export function Staff() {
     const { staff, addStaff, updateStaff, deleteStaff } = useData();
@@ -21,14 +22,6 @@ export function Staff() {
         member.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
         member.phone.includes(searchTerm)
     );
-
-    const formatPhone = (value: string) => {
-        return value
-            .replace(/\D/g, '')
-            .replace(/(\d{2})(\d)/, '($1) $2')
-            .replace(/(\d{5})(\d)/, '$1-$2')
-            .replace(/(-\d{4})\d+?$/, '$1');
-    };
 
     const resetForm = () => {
         setFormData({ name: '', phone: '', role: '', commission: 0, active: true });
@@ -85,7 +78,10 @@ export function Staff() {
             <div className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
                 <div className="relative">
                     <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <label htmlFor="staff-search" className="sr-only">Buscar</label>
                     <input
+                        id="staff-search"
+                        name="search"
                         type="text"
                         placeholder="Buscar por nome, cargo ou telefone..."
                         value={searchTerm}
@@ -110,8 +106,10 @@ export function Staff() {
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome *</label>
+                                    <label htmlFor="staff-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome *</label>
                                     <input
+                                        id="staff-name"
+                                        name="name"
                                         type="text"
                                         placeholder="Nome completo"
                                         value={formData.name}
@@ -122,8 +120,10 @@ export function Staff() {
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cargo *</label>
+                                        <label htmlFor="staff-role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cargo *</label>
                                         <input
+                                            id="staff-role"
+                                            name="role"
                                             type="text"
                                             placeholder="Ex: Manicure, Esteticista"
                                             value={formData.role}
@@ -133,8 +133,10 @@ export function Staff() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone *</label>
+                                        <label htmlFor="staff-phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone *</label>
                                         <input
+                                            id="staff-phone"
+                                            name="phone"
                                             type="tel"
                                             placeholder="(00) 00000-0000"
                                             value={formData.phone}
@@ -145,10 +147,12 @@ export function Staff() {
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Comissão (%) *</label>
+                                    <label htmlFor="staff-commission" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Comissão (%) *</label>
                                     <div className="relative">
                                         <Percent className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                         <input
+                                            id="staff-commission"
+                                            name="commission"
                                             type="number"
                                             placeholder="0"
                                             min="0"
@@ -164,12 +168,13 @@ export function Staff() {
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
-                                        id="active"
+                                        id="staff-active"
+                                        name="active"
                                         checked={formData.active}
                                         onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                                         className="w-4 h-4 text-pink-500 rounded focus:ring-pink-500 border-gray-300 dark:border-gray-600"
                                     />
-                                    <label htmlFor="active" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">Ativo</label>
+                                    <label htmlFor="staff-active" className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">Ativo</label>
                                 </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-3 pt-4">

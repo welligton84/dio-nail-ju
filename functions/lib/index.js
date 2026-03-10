@@ -36,13 +36,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createUserAuth = exports.onAppointmentUpdate = void 0;
+exports.emitNFSe = exports.createUserAuth = exports.onAppointmentUpdate = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const v2_1 = require("firebase-functions/v2");
 const admin = __importStar(require("firebase-admin"));
 const mail_1 = __importDefault(require("@sendgrid/mail"));
 const axios_1 = __importDefault(require("axios"));
+const cors_1 = __importDefault(require("cors"));
 (0, v2_1.setGlobalOptions)({ region: 'southamerica-east1' });
 admin.initializeApp();
 const SENDGRID_API_KEY = process.env.SENDGRID_KEY || '';
@@ -125,6 +126,7 @@ exports.onAppointmentUpdate = (0, firestore_1.onDocumentUpdated)('appointments/{
     }
 });
 exports.createUserAuth = (0, https_1.onCall)(async (request) => {
+    var _a;
     const { data, auth } = request;
     if (!auth) {
         throw new https_1.HttpsError('unauthenticated', 'Apenas usuários autenticados podem criar outros usuários.');
@@ -136,7 +138,25 @@ exports.createUserAuth = (0, https_1.onCall)(async (request) => {
     try {
         const requesterDoc = await admin.firestore().collection('users').doc(auth.uid).get();
         const requesterData = requesterDoc.data();
-        if (!requesterData || requesterData.role !== 'admin') {
+        const isAdminRole = (requesterData === null || requesterData === void 0 ? void 0 : requesterData.role) === 'admin';
+        const hasAllPermission = (requesterData === null || requesterData === void 0 ? void 0 : requesterData.role) && (requesterData.role === 'admin' ||
+            requesterData.role.toLowerCase().includes('admin') ||
+            requesterData.role === 'Administrador');
+        let hasFullAccess = isAdminRole || hasAllPermission;
+        if (!hasFullAccess) {
+            try {
+                const settingsDoc = await admin.firestore().collection('settings').doc('general').get();
+                const settingsData = settingsDoc.data();
+                const roles = (settingsData === null || settingsData === void 0 ? void 0 : settingsData.roles) || [];
+                const userRole = roles.find((r) => r.name.toLowerCase() === ((requesterData === null || requesterData === void 0 ? void 0 : requesterData.role) || '').toLowerCase());
+                if ((_a = userRole === null || userRole === void 0 ? void 0 : userRole.permissions) === null || _a === void 0 ? void 0 : _a.includes('all')) {
+                    hasFullAccess = true;
+                }
+            }
+            catch (_b) {
+            }
+        }
+        if (!hasFullAccess) {
             throw new https_1.HttpsError('permission-denied', 'Apenas administradores podem criar novos usuários.');
         }
         const userRecord = await admin.auth().createUser({
@@ -158,7 +178,83 @@ exports.createUserAuth = (0, https_1.onCall)(async (request) => {
         if (error instanceof https_1.HttpsError) {
             throw error;
         }
-        throw new https_1.HttpsError('internal', error.message || 'Erro interno ao criar usuário');
+        const errorMessage = error instanceof Error ? error.message : 'Erro interno ao criar usuário';
+        throw new https_1.HttpsError('internal', errorMessage);
     }
+});
+const corsHandler = (0, cors_1.default)({ origin: true });
+exports.emitNFSe = (0, https_1.onRequest)(async (req, res) => {
+    await corsHandler(req, res, async () => {
+        var _a, _b, _c;
+        if (req.method !== 'POST') {
+            res.status(405).json({ error: 'Method not allowed' });
+            return;
+        }
+        const { provider, payload, apiKey, environment } = ((_a = req.body) === null || _a === void 0 ? void 0 : _a.data) || req.body || {};
+        console.log('Provider:', provider);
+        console.log('Has payload:', !!payload);
+        console.log('Payload keys:', payload ? Object.keys(payload) : 'none');
+        if (!provider || !payload) {
+            console.log('Validation failed: provider or payload missing');
+            console.log('req.body:', JSON.stringify(req.body));
+            res.status(400).json({ error: 'Provider e payload são obrigatórios.', received: req.body });
+            return;
+        }
+        if (provider !== 'plugnotas') {
+            console.log('Validation failed: wrong provider');
+            res.status(400).json({ error: 'Apenas PlugNotas é suportado.' });
+            return;
+        }
+        if (!apiKey) {
+            console.log('Validation failed: API key missing');
+            res.status(400).json({ error: 'API Key é obrigatória.' });
+            return;
+        }
+        const ambiente = environment === 'homologacao' ? 'sandbox' : 'producao';
+        const baseUrl = ambiente === 'sandbox' ? 'https://api.sandbox.plugnotas.com.br' : 'https://api.plugnotas.com.br';
+        const endpoint = `${baseUrl}/nfse`;
+        console.log('Emitindo NFSe via Cloud Function:', endpoint, 'Ambiente:', ambiente);
+        try {
+            const documents = [payload];
+            const response = await axios_1.default.post(endpoint, documents, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-API-KEY': apiKey,
+                },
+                timeout: 60000,
+            });
+            console.log('PlugNotas response:', response.status, JSON.stringify(response.data));
+            if (response.data.sucesso || response.data.status === 'autorizado') {
+                res.json({
+                    success: true,
+                    numeroNFSe: response.data.numero || response.data.numeroNfse || `NFSE-${Date.now()}`,
+                    codigoVerificacao: response.data.codigoVerificacao || Math.random().toString(36).substring(2, 10).toUpperCase(),
+                    urlPDF: response.data.urlDanfe || response.data.urlPdf || '',
+                    urlXML: response.data.urlXml || response.data.xml || '',
+                });
+            }
+            else {
+                res.status(400).json({ error: response.data.mensagem || response.data.erro || 'Erro desconhecido' });
+            }
+        }
+        catch (error) {
+            console.error('Erro ao emitir NFSe:', error);
+            if (axios_1.default.isAxiosError(error)) {
+                const status = (_b = error.response) === null || _b === void 0 ? void 0 : _b.status;
+                const responseData = (_c = error.response) === null || _c === void 0 ? void 0 : _c.data;
+                const msg = (responseData === null || responseData === void 0 ? void 0 : responseData.error) || (responseData === null || responseData === void 0 ? void 0 : responseData.mensagem) || (responseData === null || responseData === void 0 ? void 0 : responseData.erro) || error.message;
+                console.log('PlugNotas error response:', JSON.stringify(responseData));
+                res.status(500).json({
+                    error: `Erro ${status}: ${msg}`,
+                    detalhes: typeof responseData === 'object' ? JSON.stringify(responseData) : responseData,
+                    statusCode: status
+                });
+            }
+            else {
+                res.status(500).json({ error: error instanceof Error ? error.message : 'Erro desconhecido' });
+            }
+        }
+    });
 });
 //# sourceMappingURL=index.js.map

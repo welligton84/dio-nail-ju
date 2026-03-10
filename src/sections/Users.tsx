@@ -1,21 +1,31 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Shield, User as UserIcon, Mail, CheckCircle, XCircle, Plus, X } from 'lucide-react';
+import { useAuth } from '../contexts/useAuth';
+import { useSettings } from '../contexts/useSettings';
+import { isAdmin as checkIsAdmin } from '../utils/rbac';
+import { Shield, User as UserIcon, Mail, CheckCircle, XCircle, Plus, X, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
-import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { User } from '../types';
 
 export function Users() {
     const { user, addUser, changePassword } = useAuth();
+    const { roles: settingsRoles } = useSettings();
     const [showAddForm, setShowAddForm] = useState(false);
     const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
     const [newUserData, setNewUserData] = useState({
         name: '',
         email: '',
-        role: 'employee' as 'admin' | 'employee',
+        role: '',
         active: true,
         password: '',
+    });
+    const [editUserData, setEditUserData] = useState({
+        name: '',
+        role: '',
+        active: true,
     });
     const [passwords, setPasswords] = useState({
         current: '',
@@ -41,10 +51,14 @@ export function Users() {
 
     const handleAddUser = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!newUserData.role) {
+            toast.error('Selecione uma função para o usuário');
+            return;
+        }
         const { password, ...userData } = newUserData;
         await addUser(userData, password);
         setShowAddForm(false);
-        setNewUserData({ name: '', email: '', role: 'employee', active: true, password: '' });
+        setNewUserData({ name: '', email: '', role: '', active: true, password: '' });
     };
 
     const handleChangePassword = async (e: React.FormEvent) => {
@@ -58,18 +72,50 @@ export function Users() {
         setPasswords({ current: '', new: '', confirm: '' });
     };
 
-    const getRoleBadge = (role: string) => {
-        if (role === 'admin') {
+    const handleEditUser = (u: User) => {
+        setEditingUser(u);
+        setEditUserData({
+            name: u.name,
+            role: u.role,
+            active: u.active,
+        });
+        setShowEditForm(true);
+    };
+
+    const handleSaveEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUser || !db) return;
+
+        try {
+            const userRef = doc(db, 'users', editingUser.id);
+            await updateDoc(userRef, {
+                name: editUserData.name,
+                role: editUserData.role,
+                active: editUserData.active,
+            });
+            toast.success('Usuário atualizado com sucesso!');
+            setShowEditForm(false);
+            setEditingUser(null);
+        } catch (error) {
+            console.error('Erro ao atualizar usuário:', error);
+            toast.error('Erro ao atualizar usuário');
+        }
+    };
+
+    const getRoleBadge = (roleName: string) => {
+        const role = settingsRoles.find(r => r.name.toLowerCase() === roleName?.toLowerCase());
+        
+        if (role?.name === 'Administrador' || roleName === 'admin') {
             return (
                 <span className="flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
                     <Shield className="w-3 h-3" />
-                    Administrador
+                    {role?.name || 'Administrador'}
                 </span>
             );
         }
         return (
             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
-                Funcionário
+                {role?.name || roleName || 'Funcionário'}
             </span>
         );
     };
@@ -87,7 +133,7 @@ export function Users() {
                     <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Usuários</h1>
                     <p className="text-gray-500 mt-1">Gerencie os usuários do sistema</p>
                 </div>
-                {user?.role === 'admin' && (
+                {checkIsAdmin(user) && (
                     <button
                         onClick={() => setShowAddForm(true)}
                         className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 gradient-bg text-white rounded-xl hover:opacity-90 transition-all shadow-lg"
@@ -101,52 +147,54 @@ export function Users() {
             {/* Add User Modal */}
             {showAddForm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-md">
-                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-semibold text-gray-900">Novo Usuário</h2>
-                            <button onClick={() => setShowAddForm(false)} className="text-gray-400 hover:text-gray-600">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Novo Usuário</h2>
+                            <button onClick={() => setShowAddForm(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                 <X className="w-6 h-6" />
                             </button>
                         </div>
                         <form onSubmit={handleAddUser} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
                                 <input
                                     type="text"
                                     value={newUserData.name}
                                     onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-800 dark:text-white"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
                                 <input
                                     type="email"
                                     value={newUserData.email}
                                     onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-800 dark:text-white"
                                     required
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Função</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Função</label>
                                 <select
                                     value={newUserData.role}
-                                    onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value as 'admin' | 'employee' })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                                    onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-800 dark:text-white"
                                 >
-                                    <option value="employee">Funcionário</option>
-                                    <option value="admin">Administrador</option>
+                                    <option value="">Selecione uma função</option>
+                                    {settingsRoles.map((role) => (
+                                        <option key={role.id} value={role.name}>{role.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Senha Provisória</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha Provisória</label>
                                 <input
                                     type="password"
                                     value={newUserData.password}
                                     onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-800 dark:text-white"
                                     placeholder="Mínimo 6 caracteres"
                                     required
                                     minLength={6}
@@ -193,37 +241,37 @@ export function Users() {
             {
                 showPasswordForm && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-                            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                                <h2 className="text-xl font-semibold text-gray-900">Alterar Senha</h2>
-                                <button onClick={() => setShowPasswordForm(false)} className="text-gray-400 hover:text-gray-600">
+                        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Alterar Senha</h2>
+                                <button onClick={() => setShowPasswordForm(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
                             <form onSubmit={handleChangePassword} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nova Senha</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova Senha</label>
                                     <input
                                         type="password"
                                         value={passwords.new}
                                         onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
+                                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none bg-white dark:bg-gray-800 dark:text-white"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar Nova Senha</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Nova Senha</label>
                                     <input
                                         type="password"
                                         value={passwords.confirm}
                                         onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
+                                        className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none bg-white dark:bg-gray-800 dark:text-white"
                                         required
                                     />
                                 </div>
                                 <div className="flex gap-3 pt-4">
                                     <button type="submit" className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl">Alterar Senha</button>
-                                    <button type="button" onClick={() => setShowPasswordForm(false)} className="px-6 py-3 border border-gray-200 rounded-xl">Cancelar</button>
+                                    <button type="button" onClick={() => setShowPasswordForm(false)} className="px-6 py-3 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl">Cancelar</button>
                                 </div>
                             </form>
                         </div>
@@ -232,40 +280,41 @@ export function Users() {
             }
 
             {/* Users List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900">Todos os Usuários</h2>
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Todos os Usuários</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Usuário</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">E-mail</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Função</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Status</th>
-                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Criado em</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Usuário</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">E-mail</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Função</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Criado em</th>
+                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600 dark:text-gray-300">Ações</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                             {usersList.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                         Nenhum usuário cadastrado além de você.
                                     </td>
                                 </tr>
                             ) : (
                                 usersList.map((u: User) => (
-                                    <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                                    <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-500">
+                                                <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-full flex items-center justify-center text-pink-500 dark:text-pink-400">
                                                     <UserIcon className="w-5 h-5" />
                                                 </div>
-                                                <span className="font-medium text-gray-900">{u.name}</span>
+                                                <span className="font-medium text-gray-900 dark:text-white">{u.name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600">{u.email}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{u.email}</td>
                                         <td className="px-6 py-4">{getRoleBadge(u.role)}</td>
                                         <td className="px-6 py-4">
                                             {u.active ? (
@@ -280,7 +329,18 @@ export function Users() {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">{formatDate(u.createdAt)}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{formatDate(u.createdAt)}</td>
+                                        <td className="px-6 py-4">
+                                            {user?.role === 'admin' || user?.role === 'Administrador' ? (
+                                                <button
+                                                    onClick={() => handleEditUser(u)}
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                                                    title="Editar usuário"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            ) : null}
+                                        </td>
                                     </tr>
                                 ))
                             )}
@@ -288,6 +348,60 @@ export function Users() {
                     </table>
                 </div>
             </div>
+
+            {/* Edit User Modal */}
+            {showEditForm && editingUser && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Editar Usuário</h2>
+                            <button onClick={() => setShowEditForm(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
+                                <input
+                                    type="text"
+                                    value={editUserData.name}
+                                    onChange={(e) => setEditUserData({ ...editUserData, name: e.target.value })}
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-800 dark:text-white"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Função</label>
+                                <select
+                                    value={editUserData.role}
+                                    onChange={(e) => setEditUserData({ ...editUserData, role: e.target.value })}
+                                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-pink-500 bg-white dark:bg-gray-800 dark:text-white"
+                                >
+                                    {settingsRoles.map((role) => (
+                                        <option key={role.id} value={role.name}>{role.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="userActive"
+                                    checked={editUserData.active}
+                                    onChange={(e) => setEditUserData({ ...editUserData, active: e.target.checked })}
+                                    className="w-5 h-5 rounded border-gray-300 text-pink-500 focus:ring-pink-500"
+                                />
+                                <label htmlFor="userActive" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Usuário Ativo
+                                </label>
+                            </div>
+                            <div className="flex gap-3 pt-4">
+                                <button type="submit" className="flex-1 py-3 gradient-bg text-white font-semibold rounded-xl">Salvar</button>
+                                <button type="button" onClick={() => setShowEditForm(false)} className="px-6 py-3 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
